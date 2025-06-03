@@ -1,0 +1,12 @@
+{
+  "domain": "tibber_unofficial",
+  "name": "Tibber Unofficial",
+  "documentation": "https://github.com/senaxx/Tibber_unofficial",
+  "issue_tracker": "https://github.com/senaxx/Tibber_unofficial/issues",
+  "codeowners": ["@senaxx"],
+  "version": "0.1.1",
+  "iot_class": "cloud_polling",
+  "requirements": [],
+  "dependencies": [],
+  "config_flow": true
+}

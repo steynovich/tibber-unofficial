@@ -1,0 +1,39 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Verbind met Tibber (Onofficieel)",
+        "description": "Voer alstublieft uw Tibber inloggegevens in.",
+        "data": {
+          "email": "E-mailadres",
+          "password": "Wachtwoord"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Kan geen verbinding maken met Tibber. Controleer alstublieft uw netwerk en inloggegevens.",
+      "invalid_auth": "Ongeldig e-mailadres of wachtwoord.",
+      "unknown": "Er is een onbekende fout opgetreden tijdens de installatie. Controleer alstublieft de logs.",
+      "cannot_connect_homes": "Kan uw Tibber-huizen niet ophalen. Probeer het alstublieft opnieuw of controleer de logs.",
+      "unknown_home_select": "Er is een onbekende fout opgetreden bij het selecteren van uw Tibber-thuis. Controleer alstublieft de logs.",
+      "api_client_not_initialized": "API-client niet geïnitialiseerd. Start alstublieft de configuratiestroom opnieuw."
+    },
+    "abort": {
+      "already_configured": "Dit Tibber-account en -thuis zijn al geconfigureerd.",
+      "no_homes_found": "Geen huizen gevonden voor dit Tibber-account.",
+      "no_active_deal": "Geen thuis gevonden met een actief energiecontract. Zorg ervoor dat u een actief contract heeft met Tibber.",
+      "home_id_missing": "Kon geen geldig Thuis ID ophalen van de API voor het geselecteerde thuis.",
+      "auth_failed_homes": "Authenticatie mislukt tijdens het ophalen van uw Tibber-huizen. Controleer uw inloggegevens en probeer het opnieuw.",
+      "api_client_not_initialized": "Interne fout: API-client was niet gereed. Probeer alstublieft de configuratiestroom opnieuw te starten."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Tibber Onofficiële Opties",
+        "description": "Er zijn momenteel geen opties om te configureren voor deze integratie.",
+        "data": {}
+      }
+    }
+  }
+}

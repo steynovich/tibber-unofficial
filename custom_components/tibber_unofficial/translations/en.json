@@ -1,0 +1,39 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Tibber (Unofficial)",
+        "description": "Please enter your Tibber login credentials.",
+        "data": {
+          "email": "Email",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to Tibber. Please check your network and credentials.",
+      "invalid_auth": "Invalid email or password.",
+      "unknown": "An unknown error occurred during setup. Please check the logs.",
+      "cannot_connect_homes": "Unable to fetch your Tibber homes. Please try again or check logs.",
+      "unknown_home_select": "An unknown error occurred while selecting your Tibber home. Please check logs.",
+      "api_client_not_initialized": "API client not initialized. Please restart the setup flow."
+    },
+    "abort": {
+      "already_configured": "This Tibber account and home are already configured.",
+      "no_homes_found": "No homes were found for this Tibber account.",
+      "no_active_deal": "No home with an active energy deal was found. Please ensure you have an active contract with Tibber.",
+      "home_id_missing": "Could not retrieve a valid Home ID from the API for the selected home.",
+      "auth_failed_homes": "Authentication failed while trying to fetch your Tibber homes. Please check credentials and try again.",
+      "api_client_not_initialized": "Internal error: API client was not ready. Please try restarting the setup flow."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Tibber Unofficial Options",
+        "description": "There are currently no options to configure for this integration.",
+        "data": {}
+      }
+    }
+  }
+}
