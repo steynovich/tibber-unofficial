@@ -51,7 +51,29 @@ async def async_setup_entry(
     rewards_coordinator: GridRewardsCoordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR_REWARDS]
     
     entities = []
+    # Check initial data from the coordinator to decide if sensors should be enabled by default
+    initial_rewards_data = rewards_coordinator.data if rewards_coordinator.last_update_success else {}
+
     for data_key, name_suffix, icon, period_from_key, period_to_key in SENSOR_DEFINITIONS:
+        # If the specific data_key is None in the initial data, disable the sensor by default.
+        # This applies mainly to EV and Homevolt sensors if the user doesn't have those reward types.
+        # Total sensors are usually always relevant if any reward data exists.
+        initially_available = True # Default to true
+        if initial_rewards_data is None or initial_rewards_data.get(data_key) is None:
+            # For EV or Homevolt specific sensors, if their data is None initially, disable them.
+            initially_available = False
+            _LOGGER.info(
+                "Sensor for key '%s' (%s) will be disabled by default as no initial data was found.",
+                data_key, name_suffix
+            )
+        
+        # However, for "Total" sensors, we might always want them enabled if the coordinator itself has data,
+        if "total" in data_key.lower(): # If it's a total sensor
+            initially_available = True # Always enable total sensors by default if coordinator has any data
+            if initial_rewards_data is None or initial_rewards_data.get(data_key) is None:
+                 _LOGGER.debug("Total sensor %s has no initial data, but will be enabled by default.", name_suffix)
+
+
         entities.append(
             GridRewardComponentSensor(
                 coordinator=rewards_coordinator,
@@ -60,15 +82,19 @@ async def async_setup_entry(
                 name_suffix=name_suffix,
                 icon=icon,
                 period_from_key=period_from_key,
-                period_to_key=period_to_key
+                period_to_key=period_to_key,
+                enabled_by_default=initially_available # Pass the flag
             )
         )
     async_add_entities(entities)
+    _LOGGER.info("Added %d Tibber Unofficial reward sensors.", len(entities))
+
 
 class GridRewardComponentSensor(CoordinatorEntity[GridRewardsCoordinator], SensorEntity):
     """Representation of a Tibber Unofficial Grid Reward component sensor."""
     _attr_device_class = SensorDeviceClass.MONETARY
     _attr_state_class = SensorStateClass.TOTAL
+    _attr_entity_registry_enabled_default = True # Default for all sensors
 
     def __init__(
         self,
@@ -78,7 +104,8 @@ class GridRewardComponentSensor(CoordinatorEntity[GridRewardsCoordinator], Senso
         name_suffix: str,
         icon: str,
         period_from_key: str,
-        period_to_key: str
+        period_to_key: str,
+        enabled_by_default: bool = True # New parameter
     ):
         """Initialize the sensor."""
         super().__init__(coordinator)
@@ -96,6 +123,12 @@ class GridRewardComponentSensor(CoordinatorEntity[GridRewardsCoordinator], Senso
         self._attr_name = f"Grid Rewards {name_suffix}"
         self._attr_unique_id = f"{self._config_entry_id}_{self._data_key}"
         self._attr_icon = icon
+        
+        # Set if this entity should be enabled by default in the entity registry
+        self._attr_entity_registry_enabled_default = enabled_by_default
+        
+        # _LOGGER.debug("Initializing sensor: %s (UID: %s, EID: %s, EnabledByDefault: %s)", 
+        #               self.name, self.unique_id, self.entity_id, self._attr_entity_registry_enabled_default) # Removed
 
     @property
     def available(self) -> bool:
@@ -114,7 +147,6 @@ class GridRewardComponentSensor(CoordinatorEntity[GridRewardsCoordinator], Senso
             if isinstance(value, (int, float)):
                 return round(value, 2)
             if value is not None: 
-                # _LOGGER.warning("Sensor %s (%s) received non-numeric value '%s' of type %s", self.name, self._data_key, value, type(value))
                 pass
         return None
 
@@ -149,8 +181,8 @@ class GridRewardComponentSensor(CoordinatorEntity[GridRewardsCoordinator], Senso
         
         return DeviceInfo(
             identifiers={(DOMAIN, self._config_entry_id)},
-            name=f"Tibber Api integration ({display_identifier})", 
-            manufacturer="Tibber (via unofficial integration)",   
-            model="Tibber Api",                                 
+            name=f"Tibber unofficial ({display_identifier})",
+            manufacturer="Tibber (via unofficial integration)",
+            model="Tibber API",
             sw_version=self.coordinator.config_entry.version, 
         )
