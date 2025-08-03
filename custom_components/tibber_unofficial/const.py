@@ -34,6 +34,11 @@ GRID_REWARDS_EV_YEAR = "grid_rewards_ev_year"
 GRID_REWARDS_HOMEVOLT_YEAR = "grid_rewards_homevolt_year"
 GRID_REWARDS_TOTAL_YEAR = "grid_rewards_total_year"
 
+# Current day grid rewards
+GRID_REWARDS_EV_CURRENT_DAY = "grid_rewards_ev_current_day"
+GRID_REWARDS_HOMEVOLT_CURRENT_DAY = "grid_rewards_homevolt_current_day"
+GRID_REWARDS_TOTAL_CURRENT_DAY = "grid_rewards_total_current_day"
+
 KEY_CURRENCY = "currency" # Unchanged
 
 # Attributes

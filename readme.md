@@ -18,16 +18,23 @@ Contributions and feedback are welcome!
 This first release only supports the Grid Rewards for now in 9 sensors. I'm planning to add support for Homevolt, EV, EV Charger, Contract information, Solar Inverter. 
 
 ## Releases
+
+## v0.1.1
+Adds sensors that track the result of the current day.
+
 ## v0.1
 This is my first release and only supports the Tibber Grid Rewards earnings for now
 
 ### Sensors
+ - Grid Rewards EV - Current Day
  - Grid Rewards EV - Current Month
  - Grid Rewards EV - Previous Month
  - Grid Rewards EV - Current Year
+ - Grid Rewards Homevolt - Current Day
  - Grid Rewards Homevolt - Current Month
  - Grid Rewards Homevolt - Previous Month
  - Grid Rewards Homevolt - Current Year
+ - Grid Rewards Total - Current Day
  - Grid Rewards Total - Current Month
  - Grid Rewards Total - Previous Month
  - Grid Rewards Total - Current Year
