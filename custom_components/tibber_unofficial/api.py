@@ -11,6 +11,7 @@ from .const import (
     HOMES_QUERY,
     GIZMOS_QUERY_TEMPLATE,
     GRID_REWARDS_QUERY_TEMPLATE,
+    GRID_REWARDS_DAILY_QUERY_TEMPLATE,
 )
 
 _LOGGER = logging.getLogger(__name__) # Kept for error/warning logging
@@ -160,12 +161,21 @@ class TibberApiClient:
             _LOGGER.exception("Unexpected error structure or issue fetching gizmos for home %s.", home_id)
             raise ApiError(f"Unexpected error fetching gizmos for home {home_id}: {e}") from e
 
-    async def async_get_grid_rewards_history(self, home_id: str, from_date_str: str, to_date_str: str) -> Dict[str, Any]:
-        """Fetch grid rewards history using GraphQL."""
-        variables = {"homeId": home_id, "fromDate": from_date_str, "toDate": to_date_str}
-        # _LOGGER.debug("Requesting grid_rewards_history for home %s.", home_id) # Removed
+    async def async_get_grid_rewards_history(self, home_id: str, from_date_str: str, to_date_str: str, use_daily_resolution: bool = False) -> Dict[str, Any]:
+        """Fetch grid rewards history using GraphQL.
         
-        response_data_field = await self._graphql_request(query=GRID_REWARDS_QUERY_TEMPLATE, variables=variables)
+        Args:
+            home_id: The ID of the home to fetch data for
+            from_date_str: Start date in ISO format
+            to_date_str: End date in ISO format
+            use_daily_resolution: If True, use daily resolution instead of monthly
+        """
+        variables = {"homeId": home_id, "fromDate": from_date_str, "toDate": to_date_str}
+        # _LOGGER.debug("Requesting grid_rewards_history for home %s with %s resolution.", 
+        #              home_id, "daily" if use_daily_resolution else "monthly")
+        
+        query_template = GRID_REWARDS_DAILY_QUERY_TEMPLATE if use_daily_resolution else GRID_REWARDS_QUERY_TEMPLATE
+        response_data_field = await self._graphql_request(query=query_template, variables=variables)
         default_return = {"ev": None, "homevolt": None, "total": None, "currency": None, "from_date_api": None, "to_date_api": None}
         
         try:
