@@ -25,6 +25,9 @@ from .const import (
     GRID_REWARDS_EV_YEAR, 
     GRID_REWARDS_HOMEVOLT_YEAR,
     GRID_REWARDS_TOTAL_YEAR,
+    GRID_REWARDS_EV_CURRENT_DAY,
+    GRID_REWARDS_HOMEVOLT_CURRENT_DAY,
+    GRID_REWARDS_TOTAL_CURRENT_DAY,
     KEY_CURRENCY,
     COORDINATOR_REWARDS,
 )
@@ -33,12 +36,15 @@ from . import GridRewardsCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 SENSOR_DEFINITIONS = [
+    (GRID_REWARDS_EV_CURRENT_DAY, "EV - Current Day", "mdi:car-electric", "current_day_from", "current_day_to"),
     (GRID_REWARDS_EV_CURRENT_MONTH, "EV - Current Month", "mdi:car-electric", "current_month_from", "current_month_to"),
     (GRID_REWARDS_EV_PREVIOUS_MONTH, "EV - Previous Month", "mdi:car-electric", "previous_month_from", "previous_month_to"),
     (GRID_REWARDS_EV_YEAR, "EV - Year", "mdi:car-electric", "year_from", "year_to"),
+    (GRID_REWARDS_HOMEVOLT_CURRENT_DAY, "Homevolt - Current Day", "mdi:home-battery", "current_day_from", "current_day_to"),
     (GRID_REWARDS_HOMEVOLT_CURRENT_MONTH, "Homevolt - Current Month", "mdi:home-battery", "current_month_from", "current_month_to"),
     (GRID_REWARDS_HOMEVOLT_PREVIOUS_MONTH, "Homevolt - Previous Month", "mdi:home-battery", "previous_month_from", "previous_month_to"),
     (GRID_REWARDS_HOMEVOLT_YEAR, "Homevolt - Year", "mdi:home-battery", "year_from", "year_to"),
+    (GRID_REWARDS_TOTAL_CURRENT_DAY, "Total - Current Day", "mdi:cash-multiple", "current_day_from", "current_day_to"),
     (GRID_REWARDS_TOTAL_CURRENT_MONTH, "Total - Current Month", "mdi:cash-multiple", "current_month_from", "current_month_to"),
     (GRID_REWARDS_TOTAL_PREVIOUS_MONTH, "Total - Previous Month", "mdi:cash-multiple", "previous_month_from", "previous_month_to"),
     (GRID_REWARDS_TOTAL_YEAR, "Total - Year", "mdi:cash-multiple", "year_from", "year_to"),

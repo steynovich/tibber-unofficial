@@ -19,6 +19,7 @@ from .const import (
     GRID_REWARDS_EV_CURRENT_MONTH, GRID_REWARDS_HOMEVOLT_CURRENT_MONTH, GRID_REWARDS_TOTAL_CURRENT_MONTH,
     GRID_REWARDS_EV_PREVIOUS_MONTH, GRID_REWARDS_HOMEVOLT_PREVIOUS_MONTH, GRID_REWARDS_TOTAL_PREVIOUS_MONTH,
     GRID_REWARDS_EV_YEAR, GRID_REWARDS_HOMEVOLT_YEAR, GRID_REWARDS_TOTAL_YEAR,
+    GRID_REWARDS_EV_CURRENT_DAY, GRID_REWARDS_HOMEVOLT_CURRENT_DAY, GRID_REWARDS_TOTAL_CURRENT_DAY,
     KEY_CURRENCY,
     COORDINATOR_REWARDS, COORDINATOR_GIZMOS,
 )
@@ -93,6 +94,7 @@ class GridRewardsCoordinator(DataUpdateCoordinator):
             today_dt_util = dt_util.now()
             today_datetime = datetime.now(today_dt_util.tzinfo)
 
+            # Calculate date ranges for current month, previous month, and year
             first_day_current_month = today_datetime.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             if today_datetime.month == 12:
                 first_day_next_month = today_datetime.replace(year=today_datetime.year + 1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -103,13 +105,20 @@ class GridRewardsCoordinator(DataUpdateCoordinator):
             first_day_previous_month = last_day_previous_month_calc.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             first_day_current_year = today_datetime.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
 
+            # Calculate date range for current day
+            start_of_day = today_datetime.replace(hour=0, minute=0, second=0, microsecond=0)
+            end_of_day = today_datetime
+
+            # Fetch data for all periods
             current_month_api_data = await self._fetch_reward_data_for_period("Current Month", first_day_current_month, first_day_next_month)
             previous_month_api_data = await self._fetch_reward_data_for_period("Previous Month", first_day_previous_month, first_day_current_month)
             year_api_data = await self._fetch_reward_data_for_period("Year", first_day_current_year, first_day_next_month)
+            current_day_api_data = await self._fetch_reward_data_for_period("Current Day", start_of_day, end_of_day)
             
             final_currency = current_month_api_data.get("currency") or \
                              previous_month_api_data.get("currency") or \
                              year_api_data.get("currency") or \
+                             current_day_api_data.get("currency") or \
                              "N/A"
 
             compiled_data = {
@@ -128,6 +137,11 @@ class GridRewardsCoordinator(DataUpdateCoordinator):
                 GRID_REWARDS_TOTAL_YEAR: year_api_data.get("total"),
                 "year_from": year_api_data.get("from_date_api"),
                 "year_to": year_api_data.get("to_date_api"),
+                GRID_REWARDS_EV_CURRENT_DAY: current_day_api_data.get("ev"),
+                GRID_REWARDS_HOMEVOLT_CURRENT_DAY: current_day_api_data.get("homevolt"),
+                GRID_REWARDS_TOTAL_CURRENT_DAY: current_day_api_data.get("total"),
+                "current_day_from": current_day_api_data.get("from_date_api"),
+                "current_day_to": current_day_api_data.get("to_date_api"),
                 KEY_CURRENCY: final_currency
             }
             # _LOGGER.debug("GridRewardsCoordinator updated data: %s", compiled_data) # Removed
