@@ -81,8 +81,10 @@ class GridRewardsCoordinator(DataUpdateCoordinator):
         from_date_str = from_date.isoformat()
         to_date_str = to_date.isoformat()
         try:
+            # Use daily resolution for current day data, monthly for other periods
+            use_daily_resolution = period_name == "Current Day"
             return await self.client.async_get_grid_rewards_history(
-                self.home_id, from_date_str, to_date_str
+                self.home_id, from_date_str, to_date_str, use_daily_resolution=use_daily_resolution
             )
         except Exception:
             _LOGGER.warning("GridRewardsCoordinator: Failed to fetch %s rewards for home %s.", period_name, self.home_id, exc_info=True)

@@ -102,6 +102,28 @@ query GetGridRewards($homeId: String!, $fromDate: String!, $toDate: String!) {
 }
 """
 
+# GraphQL Query for Daily Grid Rewards
+GRID_REWARDS_DAILY_QUERY_TEMPLATE = """
+query GetGridRewards($homeId: String!, $fromDate: String!, $toDate: String!) {
+  me {
+    home(id: $homeId) {
+      gridRewardsHistoryPeriod(
+        from: $fromDate,
+        to: $toDate,
+        resolution: daily
+      ) {
+        from
+        to
+        batteryRewards
+        vehicleRewards
+        totalReward
+        currency
+      }
+    }
+  }
+}
+"""
+
 # Desired Gizmo types to extract IDs for
 DESIRED_GIZMO_TYPES = [
     "REAL_TIME_METER",
