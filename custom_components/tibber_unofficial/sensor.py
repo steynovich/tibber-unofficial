@@ -1,7 +1,9 @@
 """Sensor platform for Tibber Unofficial."""
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Optional, Dict
+from typing import Any, Dict
 from datetime import datetime
 
 from homeassistant.components.sensor import (
@@ -43,7 +45,7 @@ _LOGGER = logging.getLogger(__name__)
 SENSOR_DEFINITIONS = [
     (
         GRID_REWARDS_EV_CURRENT_DAY,
-        "EV - Current Day",
+        "EV - Month to Date",
         "mdi:car-electric",
         "current_day_from",
         "current_day_to",
@@ -65,7 +67,7 @@ SENSOR_DEFINITIONS = [
     (GRID_REWARDS_EV_YEAR, "EV - Year", "mdi:car-electric", "year_from", "year_to"),
     (
         GRID_REWARDS_HOMEVOLT_CURRENT_DAY,
-        "Homevolt - Current Day",
+        "Homevolt - Month to Date",
         "mdi:home-battery",
         "current_day_from",
         "current_day_to",
@@ -93,7 +95,7 @@ SENSOR_DEFINITIONS = [
     ),
     (
         GRID_REWARDS_TOTAL_CURRENT_DAY,
-        "Total - Current Day",
+        "Total - Month to Date",
         "mdi:cash-multiple",
         "current_day_from",
         "current_day_to",
@@ -123,7 +125,7 @@ SENSOR_DEFINITIONS = [
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the sensor platform from a config entry."""
     rewards_coordinator: GridRewardsCoordinator = hass.data[DOMAIN][entry.entry_id][
@@ -178,19 +180,19 @@ async def async_setup_entry(
                 period_from_key=period_from_key,
                 period_to_key=period_to_key,
                 enabled_by_default=initially_available,  # Pass the flag
-            )
+            ),
         )
     async_add_entities(entities)
     _LOGGER.info("Added %d Tibber Unofficial reward sensors.", len(entities))
 
 
 class GridRewardComponentSensor(
-    CoordinatorEntity[GridRewardsCoordinator], SensorEntity
+    CoordinatorEntity[GridRewardsCoordinator], SensorEntity,
 ):
     """Representation of a Tibber Unofficial Grid Reward component sensor."""
 
     _attr_device_class = SensorDeviceClass.MONETARY
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+    _attr_state_class = SensorStateClass.TOTAL
     _attr_entity_registry_enabled_default = True  # Default for all sensors
     _attr_suggested_display_precision = 2
     _attr_has_entity_name = True
@@ -231,7 +233,15 @@ class GridRewardComponentSensor(
 
     @property
     def available(self) -> bool:
-        """Return True if coordinator has data and the specific sensor key exists and has a non-None value."""
+        """Return True if coordinator has data and the specific sensor key exists."""
+        # For current day sensors, allow None values (common when no rewards accumulated yet today)
+        if "current_day" in self._data_key:
+            return (
+                super().available
+                and self.coordinator.data is not None
+                and self._data_key in self.coordinator.data
+            )
+        # For other sensors, require non-None values
         return (
             super().available
             and self.coordinator.data is not None
@@ -239,18 +249,19 @@ class GridRewardComponentSensor(
         )
 
     @property
-    def native_value(self) -> Optional[float]:
+    def native_value(self) -> float | None:
         """Return the state of the sensor."""
         if self.coordinator.data:
             value = self.coordinator.data.get(self._data_key)
             if isinstance(value, (int, float)):
                 return round(value, 2)
-            if value is not None:
-                pass
+            # For current day sensors, return 0.0 when value is None (no rewards accumulated yet)
+            if value is None and "current_day" in self._data_key:
+                return 0.0
         return None
 
     @property
-    def native_unit_of_measurement(self) -> Optional[str]:
+    def native_unit_of_measurement(self) -> str | None:
         """Return the unit of measurement."""
         if self.coordinator.data:
             currency = self.coordinator.data.get(KEY_CURRENCY)
@@ -264,7 +275,7 @@ class GridRewardComponentSensor(
         attrs = {}
         if self.coordinator.data:
             attrs[ATTR_DATA_PERIOD_FROM] = self.coordinator.data.get(
-                self._period_from_key
+                self._period_from_key,
             )
             attrs[ATTR_DATA_PERIOD_TO] = self.coordinator.data.get(self._period_to_key)
             attrs[ATTR_LAST_UPDATED] = dt_util.as_utc(datetime.now()).isoformat()

@@ -1,9 +1,10 @@
 """Config flow for Tibber Unofficial."""
 
+from __future__ import annotations
+
 import logging
-import re
 import voluptuous as vol
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, List
 from collections import defaultdict
 import aiohttp
 
@@ -30,32 +31,14 @@ _LOGGER = logging.getLogger(__name__)
 #     custom_components.tibber_unofficial: debug
 
 
-def validate_email(email: str) -> str:
-    """Validate email format."""
-    email = email.strip().lower()
-    if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email):
-        raise vol.Invalid("Invalid email format")
-    if len(email) > 254:  # RFC 5321
-        raise vol.Invalid("Email address too long")
-    return email
 
-
-def validate_password(password: str) -> str:
-    """Validate password."""
-    if len(password) < 6:
-        raise vol.Invalid("Password must be at least 6 characters")
-    if len(password) > 128:
-        raise vol.Invalid("Password too long")
-    if not password.strip():
-        raise vol.Invalid("Password cannot be empty or whitespace")
-    return password
 
 
 USER_DATA_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_EMAIL): vol.All(cv.string, validate_email),
-        vol.Required(CONF_PASSWORD): vol.All(cv.string, validate_password),
-    }
+        vol.Required(CONF_EMAIL): cv.string,
+        vol.Required(CONF_PASSWORD): vol.All(cv.string, vol.Length(min=6, max=128)),
+    },
 )
 
 
@@ -67,7 +50,7 @@ class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignor
 
     @staticmethod
     @config_entries.HANDLERS.register(DOMAIN)
-    def async_get_options_flow(config_entry):
+    def async_get_options_flow(config_entry: Any) -> Any:
         """Get the options flow for this handler."""
         from .options_flow import TibberOptionsFlow
 
@@ -81,14 +64,14 @@ class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignor
         super().__init__()
         self.user_auth_data = {}
 
-    async def async_step_user(self, user_input: Optional[Dict[str, Any]] = None):
+    async def async_step_user(self, user_input: Dict[str, Any] | None = None) -> Any:
         """Handle the initial step (email/password authentication)."""
         errors: Dict[str, str] = {}
         if user_input is not None:
             try:
                 # Validate and sanitize inputs
-                email = validate_email(user_input[CONF_EMAIL])
-                password = validate_password(user_input[CONF_PASSWORD])
+                email = user_input[CONF_EMAIL].strip().lower()
+                password = user_input[CONF_PASSWORD].strip()
             except vol.Invalid as exc:
                 _LOGGER.warning("Input validation failed: %s", exc)
                 errors["base"] = "invalid_input"
@@ -99,21 +82,15 @@ class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignor
                     description_placeholders={"error": str(exc)},
                 )
 
-            # Create a temporary session with connection pooling for config flow
-            connector = aiohttp.TCPConnector(
-                limit=5,  # Smaller limit for config flow
-                limit_per_host=3,
-                ttl_dns_cache=300,
-                enable_cleanup_closed=True,
-            )
+            # Create a temporary session for config flow
             timeout = aiohttp.ClientTimeout(total=30, connect=10, sock_read=20)
             session = async_create_clientsession(
-                self.hass, connector=connector, timeout=timeout
+                self.hass, timeout=timeout,
             )
 
             try:
                 self.api_client = TibberApiClient(
-                    session=session, email=email, password=password
+                    session=session, email=email, password=password,
                 )
                 self.user_auth_data = {
                     CONF_EMAIL: email,
@@ -140,10 +117,10 @@ class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignor
                     await session.close()
 
         return self.async_show_form(
-            step_id="user", data_schema=USER_DATA_SCHEMA, errors=errors
+            step_id="user", data_schema=USER_DATA_SCHEMA, errors=errors,
         )
 
-    async def async_step_select_home(self, user_input: Optional[Dict[str, Any]] = None):
+    async def async_step_select_home(self, user_input: Dict[str, Any] | None = None) -> Any:
         """Handle fetching homes, selecting one, and then fetching gizmos."""
         errors: Dict[str, str] = {}
         try:
@@ -181,7 +158,7 @@ class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignor
 
             if not selected_home_id:
                 _LOGGER.error(
-                    "Selected home has no ID: %s. Aborting flow.", selected_home
+                    "Selected home has no ID: %s. Aborting flow.", selected_home,
                 )
                 return self.async_abort(reason="home_id_missing")
 
@@ -234,7 +211,7 @@ class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignor
             self._abort_if_unique_id_configured(updates=entry_data)
 
             _LOGGER.info(
-                "✅ Configuration successful for %s - Creating entry",
+                "Configuration successful for %s - Creating entry",
                 self.user_auth_data[CONF_EMAIL],
             )
             return self.async_create_entry(
@@ -250,13 +227,13 @@ class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignor
             _LOGGER.debug("Full API error details:", exc_info=True)
             errors["base"] = "cannot_connect_homes"
             return self.async_show_form(
-                step_id="user", data_schema=USER_DATA_SCHEMA, errors=errors
+                step_id="user", data_schema=USER_DATA_SCHEMA, errors=errors,
             )
         except Exception as e:
             _LOGGER.exception(
-                "Unexpected error during home/gizmo selection: %s", str(e)
+                "Unexpected error during home/gizmo selection: %s", str(e),
             )
             errors["base"] = "unknown_home_select"
             return self.async_show_form(
-                step_id="user", data_schema=USER_DATA_SCHEMA, errors=errors
+                step_id="user", data_schema=USER_DATA_SCHEMA, errors=errors,
             )

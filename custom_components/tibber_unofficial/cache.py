@@ -1,8 +1,10 @@
 """Caching module for Tibber Unofficial integration."""
 
+from __future__ import annotations
+
 import logging
 import time
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Tuple
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -20,14 +22,14 @@ class ApiCache:
             default_ttl: Default time-to-live for cache entries in seconds
         """
         self._cache: Dict[
-            str, Tuple[Any, float, float]
+            str, Tuple[Any, float, float],
         ] = {}  # key -> (data, expiry_time, cached_at)
         self._default_ttl = default_ttl
         self._hit_count = 0
         self._miss_count = 0
         _LOGGER.debug("Cache initialized with default TTL: %d seconds", default_ttl)
 
-    def _make_key(self, method: str, **kwargs) -> str:
+    def _make_key(self, method: str, **kwargs: Any) -> str:
         """Create a cache key from method name and arguments."""
         # Sort kwargs for consistent key generation
         sorted_kwargs = sorted(kwargs.items())
@@ -35,7 +37,7 @@ class ApiCache:
         # Use SHA256 for better collision resistance
         return hashlib.sha256(key_data.encode()).hexdigest()
 
-    def get(self, method: str, **kwargs) -> Optional[Any]:
+    def get(self, method: str, **kwargs: Any) -> Any | None:
         """Get cached data if available and not expired.
 
         Args:
@@ -70,7 +72,7 @@ class ApiCache:
         _LOGGER.debug("Cache MISS for %s", method)
         return None
 
-    def set(self, method: str, data: Any, ttl: Optional[int] = None, **kwargs) -> None:
+    def set(self, method: str, data: Any, ttl: int | None = None, **kwargs: Any) -> None:
         """Store data in cache.
 
         Args:
@@ -87,7 +89,7 @@ class ApiCache:
         self._cache[key] = (data, expiry_time, current_time)
         _LOGGER.debug("Cached %s for %d seconds", method, ttl)
 
-    def invalidate(self, method: Optional[str] = None, **kwargs) -> None:
+    def invalidate(self, method: str | None = None, **kwargs: Any) -> None:
         """Invalidate cache entries.
 
         Args:
@@ -155,7 +157,7 @@ class ApiCache:
 class SmartCache(ApiCache):
     """Smart cache with adaptive TTL based on data patterns."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize smart cache with context-aware TTLs."""
         super().__init__(default_ttl=300)
 
@@ -169,7 +171,7 @@ class SmartCache(ApiCache):
             "rewards_historical": 3600,  # 1 hour - historical data doesn't change
         }
 
-    def set_smart(self, method: str, data: Any, data_type: str, **kwargs) -> None:
+    def set_smart(self, method: str, data: Any, data_type: str, **kwargs: Any) -> None:
         """Store data with intelligent TTL based on data type.
 
         Args:
@@ -196,5 +198,5 @@ class SmartCache(ApiCache):
 
         self.set(method, data, ttl, **kwargs)
         _LOGGER.debug(
-            "Smart cached %s as %s type for %d seconds", method, data_type, ttl
+            "Smart cached %s as %s type for %d seconds", method, data_type, ttl,
         )

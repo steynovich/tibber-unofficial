@@ -20,7 +20,7 @@ class RateLimiterStorage:
         self._hass = hass
         self._entry_id = entry_id
         self._store = Store(
-            hass, STORAGE_VERSION, f"{STORAGE_KEY_PREFIX}.{entry_id}.rate_limiter"
+            hass, STORAGE_VERSION, f"{STORAGE_KEY_PREFIX}.{entry_id}.rate_limiter",
         )
         self._data: Dict[str, Any] = {}
 

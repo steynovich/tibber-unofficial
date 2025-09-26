@@ -4,7 +4,7 @@ import logging
 from typing import Dict, Any, Optional
 import voluptuous as vol
 
-from homeassistant.components.repairs import RepairFlow, ConfirmRepairFlow
+from homeassistant.components.repairs import RepairsFlow, ConfirmRepairFlow
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv, issue_registry as ir
@@ -18,7 +18,7 @@ async def async_create_fix_flow(
     hass: HomeAssistant,
     issue_id: str,
     data: Dict[str, Any] | None,
-) -> RepairFlow:
+) -> RepairsFlow:
     """Create a repair flow."""
     if issue_id == "auth_failed":
         return AuthFailedRepairFlow(hass, issue_id, data)
@@ -30,18 +30,18 @@ async def async_create_fix_flow(
     return ConfirmRepairFlow()
 
 
-class AuthFailedRepairFlow(RepairFlow):
+class AuthFailedRepairFlow(RepairsFlow):
     """Handle authentication failure repair."""
 
     def __init__(
-        self, hass: HomeAssistant, issue_id: str, data: Dict[str, Any] | None
+        self, hass: HomeAssistant, issue_id: str, data: Dict[str, Any] | None,
     ) -> None:
         """Initialize the repair flow."""
         super().__init__(hass, issue_id, data)
         self.entry_id = data.get("entry_id") if data else None
 
     async def async_step_init(
-        self, user_input: Dict[str, Any] | None = None
+        self, user_input: Dict[str, Any] | None = None,
     ) -> FlowResult:
         """Handle the initial step."""
         if user_input is None:
@@ -54,7 +54,7 @@ class AuthFailedRepairFlow(RepairFlow):
                     {
                         vol.Required("email"): cv.string,
                         vol.Required("password"): cv.string,
-                    }
+                    },
                 ),
             )
 
@@ -73,7 +73,7 @@ class AuthFailedRepairFlow(RepairFlow):
                 )
                 await api_client.authenticate()
                 _LOGGER.info(
-                    "Authentication repair successful for %s", user_input["email"]
+                    "Authentication repair successful for %s", user_input["email"],
                 )
 
         except ApiAuthError:
@@ -89,7 +89,7 @@ class AuthFailedRepairFlow(RepairFlow):
                     {
                         vol.Required("email"): cv.string,
                         vol.Required("password"): cv.string,
-                    }
+                    },
                 ),
                 errors=errors,
             )
@@ -113,11 +113,11 @@ class AuthFailedRepairFlow(RepairFlow):
         )
 
 
-class DeprecatedConfigRepairFlow(RepairFlow):
+class DeprecatedConfigRepairFlow(RepairsFlow):
     """Handle deprecated configuration repair."""
 
     async def async_step_init(
-        self, user_input: Dict[str, Any] | None = None
+        self, user_input: Dict[str, Any] | None = None,
     ) -> FlowResult:
         """Handle the initial step."""
         if user_input is None:
@@ -149,11 +149,11 @@ class DeprecatedConfigRepairFlow(RepairFlow):
         )
 
 
-class RateLimitRepairFlow(RepairFlow):
+class RateLimitRepairFlow(RepairsFlow):
     """Handle rate limit exceeded repair."""
 
     async def async_step_init(
-        self, user_input: Dict[str, Any] | None = None
+        self, user_input: Dict[str, Any] | None = None,
     ) -> FlowResult:
         """Handle the initial step."""
         if user_input is None:
@@ -169,9 +169,9 @@ class RateLimitRepairFlow(RepairFlow):
                 data_schema=vol.Schema(
                     {
                         vol.Required(
-                            "update_interval_minutes", default=recommended_interval
+                            "update_interval_minutes", default=recommended_interval,
                         ): vol.All(vol.Coerce(int), vol.Range(min=5, max=1440)),
-                    }
+                    },
                 ),
             )
 
@@ -224,7 +224,7 @@ async def async_create_issue(
 
 
 async def async_delete_issue(
-    hass: HomeAssistant, issue_id: str, issue_domain: str
+    hass: HomeAssistant, issue_id: str, issue_domain: str,
 ) -> None:
     """Delete a repair issue."""
     ir.async_delete_issue(hass, issue_domain, issue_id)

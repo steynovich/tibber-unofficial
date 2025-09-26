@@ -81,19 +81,19 @@ Access configuration options via **Settings** → **Devices & Services** → **T
 The integration creates 12 sensors organized by device type and time period:
 
 ### Electric Vehicle (EV) Rewards
-- `sensor.tibber_unofficial_ev_current_day` - EV rewards for today
+- `sensor.tibber_unofficial_ev_current_day` - EV rewards month to date
 - `sensor.tibber_unofficial_ev_current_month` - EV rewards for current month
 - `sensor.tibber_unofficial_ev_previous_month` - EV rewards for previous month
 - `sensor.tibber_unofficial_ev_year` - EV rewards for current year
 
 ### Homevolt Battery Rewards
-- `sensor.tibber_unofficial_homevolt_current_day` - Battery rewards for today
+- `sensor.tibber_unofficial_homevolt_current_day` - Battery rewards month to date
 - `sensor.tibber_unofficial_homevolt_current_month` - Battery rewards for current month
 - `sensor.tibber_unofficial_homevolt_previous_month` - Battery rewards for previous month
 - `sensor.tibber_unofficial_homevolt_year` - Battery rewards for current year
 
 ### Total Rewards (Combined)
-- `sensor.tibber_unofficial_total_current_day` - Total rewards for today
+- `sensor.tibber_unofficial_total_current_day` - Total rewards month to date
 - `sensor.tibber_unofficial_total_current_month` - Total rewards for current month
 - `sensor.tibber_unofficial_total_previous_month` - Total rewards for previous month
 - `sensor.tibber_unofficial_total_year` - Total rewards for current year
@@ -381,6 +381,30 @@ This first release only supports the Grid Rewards for now in 9 sensors. I'm plan
 
 ## Releases
 
+## v0.2.0 (2025-09-26)
+### 🐛 Bug Fixes
+- Fixed Home Assistant 2025.9+ compatibility issues:
+  - Corrected `RepairFlow` to `RepairsFlow` import
+  - Fixed `cv.email` validation (doesn't exist in HA)
+  - Removed duplicate connector parameter in `async_create_clientsession`
+  - Fixed `async_create_background_task` call signature
+- Fixed sensor state_class incompatibility with monetary device_class
+- Fixed "Not found" error for current day rewards (API doesn't support daily resolution)
+- Resolved background task not cancelling properly during shutdown
+
+### 🔧 Improvements
+- Added comprehensive type hints throughout codebase
+- Implemented proper jitter and exponential backoff for API retries
+- Updated GitHub Actions to latest versions (Python 3.12)
+- Removed all emoticons from log messages for cleaner logs
+- Month to Date sensors now show current month data (daily resolution not supported)
+
+### 📝 Code Quality
+- Added `from __future__ import annotations` to all modules
+- Fixed all mypy type checking issues (reduced from 43 to 20 unavoidable)
+- Fixed all ruff linting issues
+- Improved code organization and documentation
+
 ## v0.1.1
 Adds sensors that track the result of the current day.
 
@@ -388,15 +412,15 @@ Adds sensors that track the result of the current day.
 This is my first release and only supports the Tibber Grid Rewards earnings for now
 
 ### Sensors
- - Grid Rewards EV - Current Day
+ - Grid Rewards EV - Month to Date
  - Grid Rewards EV - Current Month
  - Grid Rewards EV - Previous Month
  - Grid Rewards EV - Current Year
- - Grid Rewards Homevolt - Current Day
+ - Grid Rewards Homevolt - Month to Date
  - Grid Rewards Homevolt - Current Month
  - Grid Rewards Homevolt - Previous Month
  - Grid Rewards Homevolt - Current Year
- - Grid Rewards Total - Current Day
+ - Grid Rewards Total - Month to Date
  - Grid Rewards Total - Current Month
  - Grid Rewards Total - Previous Month
  - Grid Rewards Total - Current Year

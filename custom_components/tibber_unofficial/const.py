@@ -111,7 +111,7 @@ query GetGridRewards($homeId: String!, $fromDate: String!, $toDate: String!) {
       gridRewardsHistoryPeriod(
         from: $fromDate,
         to: $toDate,
-        resolution: daily
+        resolution: monthly
       ) {
         from
         to

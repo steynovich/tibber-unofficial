@@ -33,7 +33,7 @@ class TibberOptionsFlow(config_entries.OptionsFlow):
         self.config_entry = config_entry
 
     async def async_step_init(
-        self, user_input: Dict[str, Any] | None = None
+        self, user_input: Dict[str, Any] | None = None,
     ) -> FlowResult:
         """Manage the options."""
         if user_input is not None:
@@ -68,7 +68,7 @@ class TibberOptionsFlow(config_entries.OptionsFlow):
                         cv.positive_int,
                         vol.Range(min=MIN_GIZMO_INTERVAL, max=168),  # Max 1 week
                     ),
-                }
+                },
             ),
             description_placeholders={
                 "rewards_min": str(MIN_REWARDS_INTERVAL),

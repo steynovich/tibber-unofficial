@@ -16,13 +16,13 @@ SERVICE_CLEAR_CACHE = "clear_cache"
 REFRESH_REWARDS_SCHEMA = vol.Schema(
     {
         vol.Optional("entry_id"): cv.string,
-    }
+    },
 )
 
 CLEAR_CACHE_SCHEMA = vol.Schema(
     {
         vol.Optional("entry_id"): cv.string,
-    }
+    },
 )
 
 

@@ -1,8 +1,11 @@
 """Rate limiting for API calls."""
 
+from __future__ import annotations
+
 import asyncio
 import time
 import logging
+from typing import Any
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -54,7 +57,7 @@ class RateLimiter:
 class MultiTierRateLimiter:
     """Multi-tier rate limiter for different time windows."""
 
-    def __init__(self, storage=None):
+    def __init__(self, storage: Any = None) -> None:
         """Initialize with Tibber API limits.
 
         Args:
@@ -68,7 +71,7 @@ class MultiTierRateLimiter:
         self._last_save_time = time.monotonic()
         self._save_interval = 60  # Save state every minute
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Load saved state from storage if available."""
         if self._storage:
             try:
@@ -95,7 +98,7 @@ class MultiTierRateLimiter:
                 await self._save_state()
                 self._last_save_time = current_time
 
-    async def _save_state(self):
+    async def _save_state(self) -> None:
         """Save current state to storage."""
         if self._storage:
             try:

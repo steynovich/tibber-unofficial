@@ -28,7 +28,7 @@ TO_REDACT = {
 
 
 async def async_get_config_entry_diagnostics(
-    hass: HomeAssistant, entry: ConfigEntry
+    hass: HomeAssistant, entry: ConfigEntry,
 ) -> Dict[str, Any]:
     """Return diagnostics for a config entry."""
     data = hass.data[DOMAIN][entry.entry_id]
@@ -73,7 +73,7 @@ async def async_get_config_entry_diagnostics(
             if rewards_coordinator.data
             else [],
             "home_id_redacted": async_redact_data(
-                {"home_id": rewards_coordinator.home_id}, TO_REDACT
+                {"home_id": rewards_coordinator.home_id}, TO_REDACT,
             )["home_id"],
         }
 
@@ -92,7 +92,7 @@ async def async_get_config_entry_diagnostics(
             if gizmos_coordinator.data
             else [],
             "home_id_redacted": async_redact_data(
-                {"home_id": gizmos_coordinator.home_id}, TO_REDACT
+                {"home_id": gizmos_coordinator.home_id}, TO_REDACT,
             )["home_id"],
         }
 
@@ -111,7 +111,7 @@ async def async_get_config_entry_diagnostics(
             else {},
             "rate_limiter_stats": {
                 "hourly_tokens": getattr(
-                    api_client._rate_limiter.hourly, "tokens", None
+                    api_client._rate_limiter.hourly, "tokens", None,
                 ),
                 "burst_tokens": getattr(api_client._rate_limiter.burst, "tokens", None),
             }
@@ -124,7 +124,7 @@ async def async_get_config_entry_diagnostics(
     device_registry = hass.helpers.device_registry.async_get(hass)
 
     entities = hass.helpers.entity_registry.async_entries_for_config_entry(
-        entity_registry, entry.entry_id
+        entity_registry, entry.entry_id,
     )
 
     for entity in entities:
@@ -152,7 +152,7 @@ async def async_get_config_entry_diagnostics(
 
     # Add device diagnostics
     devices = hass.helpers.device_registry.async_entries_for_config_entry(
-        device_registry, entry.entry_id
+        device_registry, entry.entry_id,
     )
 
     for device in devices:
@@ -163,7 +163,7 @@ async def async_get_config_entry_diagnostics(
             "sw_version": device.sw_version,
             "hw_version": device.hw_version,
             "identifiers": async_redact_data(
-                {"ids": list(device.identifiers)}, TO_REDACT
+                {"ids": list(device.identifiers)}, TO_REDACT,
             )["ids"],
             "connections": list(device.connections),
             "disabled": device.disabled,
@@ -175,7 +175,7 @@ async def async_get_config_entry_diagnostics(
 
 
 async def async_get_device_diagnostics(
-    hass: HomeAssistant, entry: ConfigEntry, device: DeviceEntry
+    hass: HomeAssistant, entry: ConfigEntry, device: DeviceEntry,
 ) -> Dict[str, Any]:
     """Return diagnostics for a device entry."""
     data = await async_get_config_entry_diagnostics(hass, entry)
@@ -193,7 +193,7 @@ async def async_get_device_diagnostics(
     # Filter entities to only those for this device
     entity_registry = hass.helpers.entity_registry.async_get(hass)
     device_entities = hass.helpers.entity_registry.async_entries_for_device(
-        entity_registry, device.id
+        entity_registry, device.id,
     )
 
     filtered_entities = []
