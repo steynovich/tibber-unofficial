@@ -1,6 +1,5 @@
 {
-  "name": "Tibber unofficial",
-  "homeassistant": "2025.5.3",
+  "name": "Tibber Unofficial",
   "render_readme": true,
   "country": "NL"
 }

@@ -1,0 +1,21 @@
+refresh_rewards:
+  name: Refresh rewards data
+  description: Manually refresh reward data for all sensors or a specific entry.
+  fields:
+    entry_id:
+      name: Entry ID
+      description: Specific config entry to refresh (optional)
+      required: false
+      selector:
+        text:
+
+clear_cache:
+  name: Clear cache
+  description: Clear the API response cache to force fresh data retrieval.
+  fields:
+    entry_id:
+      name: Entry ID
+      description: Specific config entry to clear cache for (optional)
+      required: false
+      selector:
+        text:

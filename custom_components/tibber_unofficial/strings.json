@@ -1,0 +1,129 @@
+{
+  "title": "Tibber Unofficial",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Tibber Unofficial",
+        "description": "Enter your Tibber account credentials to access Homevolt and EV Grid Rewards data.",
+        "data": {
+          "email": "Email address",
+          "password": "Password"
+        },
+        "data_description": {
+          "email": "Your Tibber account email address",
+          "password": "Your Tibber account password"
+        }
+      },
+      "homes": {
+        "title": "Select Home",
+        "description": "Choose which Tibber home to monitor for grid rewards.",
+        "data": {
+          "home_id": "Home"
+        },
+        "data_description": {
+          "home_id": "Select the home to track rewards for"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid email or password. Please check your Tibber account credentials.",
+      "cannot_connect": "Unable to connect to Tibber API. Please check your internet connection.",
+      "timeout": "Connection timed out. Please try again.",
+      "unknown": "An unexpected error occurred. Please try again or check the logs.",
+      "no_homes": "No homes found for this account. Please ensure your account has at least one home configured in the Tibber app.",
+      "invalid_home": "The selected home is no longer available. Please select a different home."
+    },
+    "abort": {
+      "already_configured": "This Tibber account is already configured.",
+      "single_instance_allowed": "Only one instance of Tibber Unofficial is allowed per home."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Update Intervals",
+        "description": "Configure how often the integration fetches data from Tibber.",
+        "data": {
+          "rewards_scan_interval": "Rewards update interval (minutes)",
+          "gizmo_scan_interval": "Device discovery interval (hours)"
+        },
+        "data_description": {
+          "rewards_scan_interval": "How often to check for updated reward data (5-1440 minutes)",
+          "gizmo_scan_interval": "How often to discover new devices (1-168 hours)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "grid_rewards_ev_current_day": {
+        "name": "EV Rewards - Current Day"
+      },
+      "grid_rewards_ev_current_month": {
+        "name": "EV Rewards - Current Month"
+      },
+      "grid_rewards_ev_previous_month": {
+        "name": "EV Rewards - Previous Month"
+      },
+      "grid_rewards_ev_year": {
+        "name": "EV Rewards - Current Year"
+      },
+      "grid_rewards_homevolt_current_day": {
+        "name": "Homevolt Rewards - Current Day"
+      },
+      "grid_rewards_homevolt_current_month": {
+        "name": "Homevolt Rewards - Current Month"
+      },
+      "grid_rewards_homevolt_previous_month": {
+        "name": "Homevolt Rewards - Previous Month"
+      },
+      "grid_rewards_homevolt_year": {
+        "name": "Homevolt Rewards - Current Year"
+      },
+      "grid_rewards_total_current_day": {
+        "name": "Total Rewards - Current Day"
+      },
+      "grid_rewards_total_current_month": {
+        "name": "Total Rewards - Current Month"
+      },
+      "grid_rewards_total_previous_month": {
+        "name": "Total Rewards - Previous Month"
+      },
+      "grid_rewards_total_year": {
+        "name": "Total Rewards - Current Year"
+      }
+    }
+  },
+  "issues": {
+      "auth_failed": {
+        "title": "Tibber Authentication Failed",
+        "description": "The Tibber Unofficial integration is unable to authenticate with your account. This may be due to changed credentials or an expired session.\n\nPlease update your credentials to restore functionality."
+      },
+      "rate_limit_exceeded": {
+        "title": "Tibber API Rate Limit Exceeded",
+        "description": "The integration is making too many requests to the Tibber API and has been rate limited. Consider increasing the update interval to reduce the frequency of requests.\n\nCurrent interval: {current_interval} minutes\nRecommended interval: {recommended_interval} minutes"
+      },
+      "deprecated_config": {
+        "title": "Deprecated Configuration Option",
+        "description": "The integration is using a deprecated configuration option {deprecated_option} which will be removed in a future version. Please use {new_option} instead."
+      }
+  },
+  "services": {
+    "refresh_rewards": {
+      "name": "Refresh Rewards Data",
+      "description": "Immediately refresh grid rewards data for all sensors."
+    },
+    "clear_cache": {
+      "name": "Clear API Cache",
+      "description": "Clear the API response cache to force fresh data retrieval."
+    }
+  },
+  "selector": {
+    "home_id": {
+      "options": {
+        "loading": "Loading homes...",
+        "no_homes": "No homes found"
+      }
+    }
+  }
+}

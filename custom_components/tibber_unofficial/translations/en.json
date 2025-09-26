@@ -13,6 +13,7 @@
     "error": {
       "cannot_connect": "Unable to connect to Tibber. Please check your network and credentials.",
       "invalid_auth": "Invalid email or password.",
+      "invalid_input": "Invalid input format. Please check your email and password.",
       "unknown": "An unknown error occurred during setup. Please check the logs.",
       "cannot_connect_homes": "Unable to fetch your Tibber homes. Please try again or check logs.",
       "unknown_home_select": "An unknown error occurred while selecting your Tibber home. Please check logs.",
@@ -31,9 +32,15 @@
     "step": {
       "init": {
         "title": "Tibber Unofficial Options",
-        "description": "There are currently no options to configure for this integration.",
-        "data": {}
+        "description": "Configure update intervals for data fetching.\n\nMinimum values: Rewards {rewards_min} minutes, Gizmos {gizmo_min} hours",
+        "data": {
+          "rewards_scan_interval": "Rewards update interval (minutes)",
+          "gizmo_scan_interval": "Device discovery interval (hours)"
+        }
       }
+    },
+    "error": {
+      "invalid_interval": "Invalid interval value"
     }
   }
 }

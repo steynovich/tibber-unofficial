@@ -1,11 +1,14 @@
 """Config flow for Tibber Unofficial."""
+
 import logging
+import re
 import voluptuous as vol
 from typing import Any, Dict, Optional, List
 from collections import defaultdict
+import aiohttp
 
 from homeassistant import config_entries
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.aiohttp_client import async_create_clientsession
 import homeassistant.helpers.config_validation as cv
 
 from .const import (
@@ -18,23 +21,61 @@ from .const import (
 )
 from .api import TibberApiClient, ApiAuthError, ApiError
 
-_LOGGER = logging.getLogger(__name__) # Kept for error logging
+_LOGGER = logging.getLogger(__name__)
+
+# Debug logging can be enabled in configuration.yaml:
+# logger:
+#   default: info
+#   logs:
+#     custom_components.tibber_unofficial: debug
+
+
+def validate_email(email: str) -> str:
+    """Validate email format."""
+    email = email.strip().lower()
+    if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email):
+        raise vol.Invalid("Invalid email format")
+    if len(email) > 254:  # RFC 5321
+        raise vol.Invalid("Email address too long")
+    return email
+
+
+def validate_password(password: str) -> str:
+    """Validate password."""
+    if len(password) < 6:
+        raise vol.Invalid("Password must be at least 6 characters")
+    if len(password) > 128:
+        raise vol.Invalid("Password too long")
+    if not password.strip():
+        raise vol.Invalid("Password cannot be empty or whitespace")
+    return password
+
 
 USER_DATA_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_EMAIL): cv.string,
-        vol.Required(CONF_PASSWORD): cv.string,
+        vol.Required(CONF_EMAIL): vol.All(cv.string, validate_email),
+        vol.Required(CONF_PASSWORD): vol.All(cv.string, validate_password),
     }
 )
 
-class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+
+class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call-arg]
     """Handle a config flow for Tibber Unofficial."""
+
     VERSION = 1
     CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
 
+    @staticmethod
+    @config_entries.HANDLERS.register(DOMAIN)
+    def async_get_options_flow(config_entry):
+        """Get the options flow for this handler."""
+        from .options_flow import TibberOptionsFlow
+
+        return TibberOptionsFlow(config_entry)
+
     user_auth_data: Dict[str, Any]
     api_client: TibberApiClient
-    
+
     def __init__(self) -> None:
         """Initialize the config flow."""
         super().__init__()
@@ -44,26 +85,60 @@ class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle the initial step (email/password authentication)."""
         errors: Dict[str, str] = {}
         if user_input is not None:
-            email = user_input[CONF_EMAIL]
-            password = user_input[CONF_PASSWORD]
-            session = async_get_clientsession(self.hass)
-            
-            self.api_client = TibberApiClient(session=session, email=email, password=password)
-            self.user_auth_data = user_input
+            try:
+                # Validate and sanitize inputs
+                email = validate_email(user_input[CONF_EMAIL])
+                password = validate_password(user_input[CONF_PASSWORD])
+            except vol.Invalid as exc:
+                _LOGGER.warning("Input validation failed: %s", exc)
+                errors["base"] = "invalid_input"
+                return self.async_show_form(
+                    step_id="user",
+                    data_schema=USER_DATA_SCHEMA,
+                    errors=errors,
+                    description_placeholders={"error": str(exc)},
+                )
+
+            # Create a temporary session with connection pooling for config flow
+            connector = aiohttp.TCPConnector(
+                limit=5,  # Smaller limit for config flow
+                limit_per_host=3,
+                ttl_dns_cache=300,
+                enable_cleanup_closed=True,
+            )
+            timeout = aiohttp.ClientTimeout(total=30, connect=10, sock_read=20)
+            session = async_create_clientsession(
+                self.hass, connector=connector, timeout=timeout
+            )
 
             try:
-                await self.api_client.authenticate() # API client logs success/failure
+                self.api_client = TibberApiClient(
+                    session=session, email=email, password=password
+                )
+                self.user_auth_data = {
+                    CONF_EMAIL: email,
+                    CONF_PASSWORD: password,
+                }  # Store validated values
+
+                _LOGGER.debug("Starting authentication for %s", email)
+                await self.api_client.authenticate()
+                _LOGGER.info("Authentication successful for %s", email)
                 return await self.async_step_select_home()
-            except ApiAuthError:
-                _LOGGER.error("Authentication failed for %s during config flow.", email)
+            except ApiAuthError as e:
+                _LOGGER.error("Authentication failed for %s: %s", email, str(e))
                 errors["base"] = "invalid_auth"
-            except ApiError: # Catch other API errors during auth
-                _LOGGER.error("API connection error during authentication for %s.", email, exc_info=True)
+            except ApiError as e:
+                _LOGGER.error("API connection error for %s: %s", email, str(e))
+                _LOGGER.debug("Full API error:", exc_info=True)
                 errors["base"] = "cannot_connect"
-            except Exception: 
-                _LOGGER.exception("Unexpected exception during authentication in config flow.")
+            except Exception as e:
+                _LOGGER.exception("Unexpected error during authentication: %s", str(e))
                 errors["base"] = "unknown"
-        
+            finally:
+                # Clean up the session if authentication failed
+                if "session" in locals() and errors:
+                    await session.close()
+
         return self.async_show_form(
             step_id="user", data_schema=USER_DATA_SCHEMA, errors=errors
         )
@@ -72,30 +147,56 @@ class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle fetching homes, selecting one, and then fetching gizmos."""
         errors: Dict[str, str] = {}
         try:
-            if not hasattr(self, 'api_client') or not self.api_client:
-                 _LOGGER.error("API client not initialized before trying to select home. Aborting flow.")
-                 return self.async_abort(reason="api_client_not_initialized")
+            if not hasattr(self, "api_client") or not self.api_client:
+                _LOGGER.error("API client not initialized - This should not happen")
+                return self.async_abort(reason="api_client_not_initialized")
 
+            _LOGGER.debug("Fetching homes for user selection")
             homes = await self.api_client.async_get_homes()
             if not homes:
-                _LOGGER.warning("No homes found for account %s", self.user_auth_data.get(CONF_EMAIL))
+                _LOGGER.warning(
+                    "No homes found for account %s - User may not have Tibber homes configured",
+                    self.user_auth_data.get(CONF_EMAIL),
+                )
                 return self.async_abort(reason="no_homes_found")
 
             suitable_homes = [h for h in homes if h.get("hasSignedEnergyDeal") is True]
             if not suitable_homes:
-                _LOGGER.warning("No homes with an active energy deal found for %s", self.user_auth_data.get(CONF_EMAIL))
+                _LOGGER.warning(
+                    "Found %d homes but none with active energy deal for %s",
+                    len(homes),
+                    self.user_auth_data.get(CONF_EMAIL),
+                )
+                _LOGGER.debug(
+                    "Home energy deal status: %s",
+                    [
+                        {"id": h.get("id")[:8] if h.get("id") else None, "deal": h.get("hasSignedEnergyDeal")}  # type: ignore[index]
+                        for h in homes
+                    ],
+                )
                 return self.async_abort(reason="no_active_deal")
-            
+
             selected_home = suitable_homes[0]
             selected_home_id = selected_home.get("id")
-            
+
             if not selected_home_id:
-                 _LOGGER.error("Selected home has no ID: %s. Aborting flow.", selected_home)
-                 return self.async_abort(reason="home_id_missing")
+                _LOGGER.error(
+                    "Selected home has no ID: %s. Aborting flow.", selected_home
+                )
+                return self.async_abort(reason="home_id_missing")
 
             selected_home_display_name = f"Home ({selected_home_id[-6:]})"
-            # _LOGGER.info("Selected Home ID: %s for account %s", selected_home_id, self.user_auth_data.get(CONF_EMAIL)) # Removed
+            _LOGGER.info(
+                "Selected home %s for %s",
+                selected_home_id[:8],
+                self.user_auth_data.get(CONF_EMAIL),
+            )
+            _LOGGER.debug(
+                "Home details: %s",
+                {k: v for k, v in selected_home.items() if k != "id"},
+            )
 
+            _LOGGER.debug("Fetching gizmos for selected home")
             gizmos = await self.api_client.async_get_gizmos(selected_home_id)
             gizmo_ids_by_type: Dict[str, List[str]] = defaultdict(list)
             if isinstance(gizmos, list):
@@ -105,9 +206,19 @@ class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     if gizmo_type in DESIRED_GIZMO_TYPES and gizmo_id:
                         gizmo_ids_by_type[gizmo_type].append(gizmo_id)
             else:
-                _LOGGER.warning("Gizmos data is not a list or is None for home %s: %s", selected_home_id, gizmos)
-            
-            # _LOGGER.info("Extracted Gizmo IDs for home %s: %s", selected_home_id, dict(gizmo_ids_by_type)) # Removed
+                _LOGGER.warning(
+                    "Invalid gizmos data for home %s - Expected list, got: %s",
+                    selected_home_id[:8],
+                    type(gizmos),
+                )
+
+            _LOGGER.info(
+                "Found gizmos for home: %s",
+                {k: len(v) for k, v in gizmo_ids_by_type.items()}
+                if gizmo_ids_by_type
+                else "None",
+            )
+            _LOGGER.debug("Gizmo IDs: %s", dict(gizmo_ids_by_type))
 
             entry_data = {
                 CONF_EMAIL: self.user_auth_data[CONF_EMAIL],
@@ -116,23 +227,36 @@ class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_GIZMO_IDS: dict(gizmo_ids_by_type),
             }
 
-            unique_flow_id = f"{self.user_auth_data[CONF_EMAIL].lower()}_{selected_home_id}"
+            unique_flow_id = (
+                f"{self.user_auth_data[CONF_EMAIL].lower()}_{selected_home_id}"
+            )
             await self.async_set_unique_id(unique_flow_id)
-            self._abort_if_unique_id_configured(updates=entry_data) 
+            self._abort_if_unique_id_configured(updates=entry_data)
 
+            _LOGGER.info(
+                "✅ Configuration successful for %s - Creating entry",
+                self.user_auth_data[CONF_EMAIL],
+            )
             return self.async_create_entry(
                 title=f"Tibber ({selected_home_display_name})",
                 data=entry_data,
             )
 
-        except ApiAuthError: # Should be rare here if user step succeeded
-            _LOGGER.error("Authentication error occurred during home/gizmo selection phase.")
+        except ApiAuthError as e:
+            _LOGGER.error("Authentication failed during home selection: %s", str(e))
             return self.async_abort(reason="auth_failed_homes")
-        except ApiError:
-            _LOGGER.error("API error during home/gizmo selection.", exc_info=True)
-            errors["base"] = "cannot_connect_homes" 
-            return self.async_show_form(step_id="user", data_schema=USER_DATA_SCHEMA, errors=errors)
-        except Exception:
-            _LOGGER.exception("Unexpected error during home/gizmo selection.")
+        except ApiError as e:
+            _LOGGER.error("API error during home/gizmo selection: %s", str(e))
+            _LOGGER.debug("Full API error details:", exc_info=True)
+            errors["base"] = "cannot_connect_homes"
+            return self.async_show_form(
+                step_id="user", data_schema=USER_DATA_SCHEMA, errors=errors
+            )
+        except Exception as e:
+            _LOGGER.exception(
+                "Unexpected error during home/gizmo selection: %s", str(e)
+            )
             errors["base"] = "unknown_home_select"
-            return self.async_show_form(step_id="user", data_schema=USER_DATA_SCHEMA, errors=errors)
+            return self.async_show_form(
+                step_id="user", data_schema=USER_DATA_SCHEMA, errors=errors
+            )

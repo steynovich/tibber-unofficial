@@ -3,11 +3,13 @@
   "name": "Tibber Unofficial",
   "codeowners": ["@senaxx"],
   "config_flow": true,
-  "dependencies": [],
+  "dependencies": ["recorder"],
   "documentation": "https://github.com/senaxx/Tibber_unofficial",
   "homekit": {},
+  "integration_type": "service",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/senaxx/Tibber_unofficial/issues",
+  "quality_scale": "gold",
   "requirements": [],
   "version": "2025.06.1"
 }

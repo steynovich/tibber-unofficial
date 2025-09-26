@@ -1,4 +1,5 @@
 """Constants for the Tibber Unofficial integration."""
+
 from datetime import timedelta
 
 # Domain of your integration
@@ -39,7 +40,7 @@ GRID_REWARDS_EV_CURRENT_DAY = "grid_rewards_ev_current_day"
 GRID_REWARDS_HOMEVOLT_CURRENT_DAY = "grid_rewards_homevolt_current_day"
 GRID_REWARDS_TOTAL_CURRENT_DAY = "grid_rewards_total_current_day"
 
-KEY_CURRENCY = "currency" # Unchanged
+KEY_CURRENCY = "currency"  # Unchanged
 
 # Attributes
 ATTR_LAST_UPDATED = "last_updated"
@@ -130,7 +131,7 @@ DESIRED_GIZMO_TYPES = [
     "INVERTER",
     "BATTERY",
     "ELECTRIC_VEHICLE",
-    "EV_CHARGER"
+    "EV_CHARGER",
 ]
 
 # Keys for storing coordinators in hass.data

@@ -1,0 +1,131 @@
+name: Bug Report
+description: Report a bug with the Tibber Unofficial integration
+title: "[Bug]: "
+labels: [bug, needs-triage]
+assignees:
+  - senaxx
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the form below with as much detail as possible.
+
+        **Before submitting**, please:
+        - Check existing issues to avoid duplicates
+        - Make sure you're running the latest version
+        - Try downloading diagnostics first (Settings → Devices & Services → Tibber Unofficial → Download Diagnostics)
+
+  - type: input
+    id: version
+    attributes:
+      label: Integration Version
+      description: Which version of Tibber Unofficial are you using?
+      placeholder: "e.g., 2025.06.1"
+    validations:
+      required: true
+
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant Version
+      description: Which version of Home Assistant are you using?
+      placeholder: "e.g., 2025.1.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: bug_description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is
+      placeholder: Describe what happened and what you expected to happen
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected Behavior
+      description: A clear description of what you expected to happen
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: Actual Behavior
+      description: What actually happened instead
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: |
+        Please include relevant log entries. Enable debug logging first:
+
+        ```yaml
+        logger:
+          logs:
+            custom_components.tibber_unofficial: debug
+        ```
+      render: shell
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: |
+        Download diagnostics from Settings → Devices & Services → Tibber Unofficial → Download Diagnostics
+        Attach the downloaded file or paste relevant sections here.
+      placeholder: Paste diagnostics data here (sensitive information is automatically redacted)
+
+  - type: checkboxes
+    id: tibber_account
+    attributes:
+      label: Tibber Account
+      description: Please confirm your Tibber account setup
+      options:
+        - label: I have an active Tibber account
+          required: true
+        - label: My account has Homevolt battery or EV connected
+          required: false
+        - label: I can see grid rewards in the official Tibber app
+          required: false
+
+  - type: checkboxes
+    id: troubleshooting
+    attributes:
+      label: Troubleshooting Done
+      description: Please confirm you've tried basic troubleshooting
+      options:
+        - label: I've restarted Home Assistant
+          required: false
+        - label: I've tried removing and re-adding the integration
+          required: false
+        - label: I've checked if repair issues are available
+          required: false
+        - label: I've verified my Tibber credentials work in the app
+          required: false
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here
+      placeholder: Screenshots, configuration details, etc.
