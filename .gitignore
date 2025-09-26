@@ -1,6 +1,40 @@
-custom_components/tibber_unofficial/__pycache__/sensor.cpython-313.pyc
-custom_components/tibber_unofficial/__pycache__/const.cpython-313.pyc
-custom_components/tibber_unofficial/__pycache__/config_flow.cpython-313.pyc
-custom_components/tibber_unofficial/__pycache__/api.cpython-313.pyc
-custom_components/tibber_unofficial/__pycache__/__init__.cpython-313.pyc
-__pycache__
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+*.cover
+.hypothesis/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Home Assistant
+config/
+.storage/
+.cloud/
+.HA_VERSION
+home-assistant.log
+home-assistant_v2.db*
+
+# Local development
+ha-core/
+hacs-action/
+hacs-integration/
+validate_hacs.py
