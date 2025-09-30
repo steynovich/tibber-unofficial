@@ -234,19 +234,18 @@ class GridRewardComponentSensor(
     @property
     def available(self) -> bool:
         """Return True if coordinator has data and the specific sensor key exists."""
+        if not super().available or self.coordinator.data is None:
+            return False
+
+        if self._data_key not in self.coordinator.data:
+            return False
+
         # For current day sensors, allow None values (common when no rewards accumulated yet today)
         if "current_day" in self._data_key:
-            return (
-                super().available
-                and self.coordinator.data is not None
-                and self._data_key in self.coordinator.data
-            )
+            return True
+
         # For other sensors, require non-None values
-        return (
-            super().available
-            and self.coordinator.data is not None
-            and self.coordinator.data.get(self._data_key) is not None
-        )
+        return self.coordinator.data.get(self._data_key) is not None
 
     @property
     def native_value(self) -> float | None:

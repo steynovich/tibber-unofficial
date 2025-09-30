@@ -81,7 +81,8 @@ query GetGizmos($homeId: String!) {
 }
 """
 
-# GraphQL Query for Grid Rewards
+# GraphQL Query for Grid Rewards (monthly resolution)
+# Note: The API doesn't properly support daily resolution, so we use monthly for both
 GRID_REWARDS_QUERY_TEMPLATE = """
 query GetGridRewards($homeId: String!, $fromDate: String!, $toDate: String!) {
   me {
@@ -103,27 +104,8 @@ query GetGridRewards($homeId: String!, $fromDate: String!, $toDate: String!) {
 }
 """
 
-# GraphQL Query for Daily Grid Rewards
-GRID_REWARDS_DAILY_QUERY_TEMPLATE = """
-query GetGridRewards($homeId: String!, $fromDate: String!, $toDate: String!) {
-  me {
-    home(id: $homeId) {
-      gridRewardsHistoryPeriod(
-        from: $fromDate,
-        to: $toDate,
-        resolution: monthly
-      ) {
-        from
-        to
-        batteryRewards
-        vehicleRewards
-        totalReward
-        currency
-      }
-    }
-  }
-}
-"""
+# Alias for compatibility - both queries use monthly resolution
+GRID_REWARDS_DAILY_QUERY_TEMPLATE = GRID_REWARDS_QUERY_TEMPLATE
 
 # Desired Gizmo types to extract IDs for
 DESIRED_GIZMO_TYPES = [

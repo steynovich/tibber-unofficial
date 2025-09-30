@@ -399,15 +399,21 @@ class GridRewardsCoordinator(DataUpdateCoordinator):
                 month=1, day=1, hour=0, minute=0, second=0, microsecond=0,
             )
 
-            # Fetch data for all periods
-            current_month_api_data = await self._fetch_reward_data_for_period(
-                "Current Month", first_day_current_month, first_day_next_month,
-            )
-            previous_month_api_data = await self._fetch_reward_data_for_period(
-                "Previous Month", first_day_previous_month, first_day_current_month,
-            )
-            year_api_data = await self._fetch_reward_data_for_period(
-                "Year", first_day_current_year, first_day_next_month,
+            # Fetch data for all periods in parallel for better performance
+            (
+                current_month_api_data,
+                previous_month_api_data,
+                year_api_data,
+            ) = await asyncio.gather(
+                self._fetch_reward_data_for_period(
+                    "Current Month", first_day_current_month, first_day_next_month,
+                ),
+                self._fetch_reward_data_for_period(
+                    "Previous Month", first_day_previous_month, first_day_current_month,
+                ),
+                self._fetch_reward_data_for_period(
+                    "Year", first_day_current_year, first_day_next_month,
+                ),
             )
 
             # Since the API doesn't properly support daily resolution,
@@ -551,15 +557,14 @@ class GizmoUpdateCoordinator(DataUpdateCoordinator):
                     if gizmo_type in DESIRED_GIZMO_TYPES and gizmo_id:
                         gizmo_ids_by_type[gizmo_type].append(gizmo_id)
 
-            processed_gizmos = dict(gizmo_ids_by_type)
             _LOGGER.info(
                 "Successfully updated gizmo data - Found: %s",
-                {k: len(v) for k, v in processed_gizmos.items()}
-                if processed_gizmos
+                {k: len(v) for k, v in gizmo_ids_by_type.items()}
+                if gizmo_ids_by_type
                 else "None",
             )
-            _LOGGER.debug("Gizmo details: %s", processed_gizmos)
-            return processed_gizmos
+            _LOGGER.debug("Gizmo details: %s", gizmo_ids_by_type)
+            return dict(gizmo_ids_by_type)
         except ApiAuthError as err:
             _LOGGER.error("Authentication failed during gizmo update: %s", str(err))
             # Create repair issue for authentication failure

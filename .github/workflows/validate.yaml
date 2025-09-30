@@ -49,4 +49,4 @@ jobs:
 
       - name: Check Python syntax
         run: |
-          python -m py_compile custom_components/tibber_unofficial/*.py
+          python -m compileall -q custom_components/tibber_unofficial

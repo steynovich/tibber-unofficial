@@ -63,10 +63,10 @@ class ApiCache:
                     expiry_time - current_time,
                 )
                 return data
-            else:
-                # Expired entry - remove it
-                del self._cache[key]
-                _LOGGER.debug("Cache expired for %s", method)
+
+            # Expired entry - remove it
+            del self._cache[key]
+            _LOGGER.debug("Cache expired for %s", method)
 
         self._miss_count += 1
         _LOGGER.debug("Cache MISS for %s", method)
@@ -108,17 +108,12 @@ class ApiCache:
                 del self._cache[key]
                 _LOGGER.debug("Invalidated cache for %s with specific args", method)
         else:
-            # Clear all entries for a method
-            keys_to_remove = []
-            for key in self._cache:
-                # This is a simple approach - in production might want to store method with key
-                keys_to_remove.append(key)
-
-            for key in keys_to_remove:
+            # Clear all entries for a method - delete while iterating safely
+            for key in list(self._cache.keys()):
                 del self._cache[key]
 
-            if keys_to_remove:
-                _LOGGER.debug("Invalidated %d cache entries", len(keys_to_remove))
+            if self._cache:
+                _LOGGER.debug("Invalidated cache entries for %s", method)
 
     def cleanup(self) -> None:
         """Remove expired entries from cache."""

@@ -89,7 +89,8 @@ class MultiTierRateLimiter:
 
     async def acquire(self) -> None:
         """Acquire permission from all rate limiters."""
-        await asyncio.gather(self.hourly.acquire(), self.burst.acquire())
+        await self.hourly.acquire()
+        await self.burst.acquire()
 
         # Periodically save state
         if self._storage:

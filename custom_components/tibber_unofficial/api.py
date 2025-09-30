@@ -6,6 +6,7 @@ import asyncio
 import logging
 import aiohttp
 import random
+import re
 from typing import Any, Dict, List
 from datetime import datetime, timedelta, timezone
 from asyncio import sleep
@@ -22,6 +23,12 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+# Compile UUID pattern once for performance
+UUID_PATTERN = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+    re.IGNORECASE,
+)
 
 # Debug logging can be enabled in HA via:
 # logger:
@@ -74,6 +81,7 @@ class TibberApiClient:
         self._rate_limiter = MultiTierRateLimiter(storage=storage)
         self._cache = SmartCache()
         self._initialized = False
+        self._auth_lock = asyncio.Lock()  # Prevent concurrent authentication
         # _LOGGER.debug("TibberApiClient initialized for email: %s", email) # Removed
 
     async def initialize(self) -> None:
@@ -98,99 +106,114 @@ class TibberApiClient:
             )
             return self._token
 
-        _LOGGER.info(
-            "Token is missing or expired for %s. Attempting to authenticate.",
-            self._email,
-        )  # Kept info for this key event
-        if not self._email or not self._password:
-            _LOGGER.error("Email or password not provided for authentication.")
-            raise ApiAuthError("Email and password are required to fetch a new token.")
-
-        # Validate email format
-        if not isinstance(self._email, str) or "@" not in self._email:
-            raise ApiAuthError("Invalid email format")
-        if not isinstance(self._password, str) or not self._password:
-            raise ApiAuthError("Invalid password")
-
-        auth_payload = {"email": self._email, "password": self._password}
-        headers = {"Content-Type": "application/json"}
-
-        # Retry authentication with exponential backoff
-        for attempt in range(self._max_retries):
-            try:
+        # Use lock to prevent concurrent authentication attempts
+        async with self._auth_lock:
+            # Check again after acquiring lock - another coroutine may have authenticated
+            if (
+                self._token
+                and self._token_expiry_time
+                and datetime.now(timezone.utc)
+                < self._token_expiry_time - timedelta(minutes=10)
+            ):
                 _LOGGER.debug(
-                    "Attempting authentication for %s (attempt %d/%d)",
+                    "Using token obtained by concurrent request for %s",
                     self._email,
-                    attempt + 1,
-                    self._max_retries,
                 )
-                async with self._session.post(
-                    API_AUTH_URL, headers=headers, json=auth_payload, timeout=10,
-                ) as response:
-                    if response.status == 400 or response.status == 401:
-                        responseText = await response.text()
-                        _LOGGER.error(
-                            "Authentication failed for %s - Status: %s, Response: %s",
-                            self._email,
-                            response.status,
-                            responseText[:200],
-                        )  # Limit response text
-                        raise ApiAuthError(
-                            "Authentication failed: Invalid email or password",
-                        )
-                    response.raise_for_status()
-                    auth_data = await response.json()
-                    # _LOGGER.debug("Authentication response data: %s", auth_data) # Removed
+                return self._token
 
-                    self._token = auth_data.get("token")
-                    if not self._token:
-                        _LOGGER.error(
-                            "Token not found in authentication response: %s", auth_data,
-                        )
-                        raise ApiAuthError("Token not received from API.")
+            _LOGGER.info(
+                "Token is missing or expired for %s. Attempting to authenticate.",
+                self._email,
+            )  # Kept info for this key event
+            if not self._email or not self._password:
+                _LOGGER.error("Email or password not provided for authentication.")
+                raise ApiAuthError("Email and password are required to fetch a new token.")
 
-                    self._token_expiry_time = datetime.now(timezone.utc) + timedelta(
-                        hours=1,
-                    )
-                    _LOGGER.info(
-                        "Successfully authenticated %s - Token expires: %s",
-                        self._email,
-                        self._token_expiry_time.isoformat(),
-                    )
+            # Validate email format
+            if not isinstance(self._email, str) or "@" not in self._email:
+                raise ApiAuthError("Invalid email format")
+            if not isinstance(self._password, str) or not self._password:
+                raise ApiAuthError("Invalid password")
+
+            auth_payload = {"email": self._email, "password": self._password}
+            headers = {"Content-Type": "application/json"}
+
+            # Retry authentication with exponential backoff
+            for attempt in range(self._max_retries):
+                try:
                     _LOGGER.debug(
-                        "Token obtained: %s...",
-                        self._token[:10] if self._token else "None",
-                    )
-                    return self._token
-            except (asyncio.TimeoutError, aiohttp.ClientError) as e:
-                if attempt < self._max_retries - 1:
-                    # Exponential backoff with jitter for auth retries
-                    base_wait = min(self._base_delay * (2**attempt), self._max_delay)
-                    jitter = base_wait * self._jitter_range * (2 * random.random() - 1)
-                    wait_time = max(0.1, base_wait + jitter)
-                    _LOGGER.warning(
-                        "Authentication network error: %s. Retrying in %.2f seconds (attempt %s/%s)",
-                        e,
-                        wait_time,
+                        "Attempting authentication for %s (attempt %d/%d)",
+                        self._email,
                         attempt + 1,
                         self._max_retries,
                     )
-                    await sleep(wait_time)
-                else:
-                    _LOGGER.error(
-                        "Error during authentication after %s retries: %s",
-                        self._max_retries,
-                        e,
-                    )
-                    raise ApiError(f"Error during authentication: {e}") from e
-            except ApiAuthError:
-                raise  # Don't retry on auth errors (bad credentials)
-            except Exception as e:
-                _LOGGER.exception("Unexpected error during authentication.")
-                raise ApiError(f"Unexpected error during authentication: {e}") from e
+                    async with self._session.post(
+                        API_AUTH_URL, headers=headers, json=auth_payload, timeout=10,
+                    ) as response:
+                        if response.status == 400 or response.status == 401:
+                            responseText = await response.text()
+                            _LOGGER.error(
+                                "Authentication failed for %s - Status: %s, Response: %s",
+                                self._email,
+                                response.status,
+                                responseText[:200],
+                            )  # Limit response text
+                            raise ApiAuthError(
+                                "Authentication failed: Invalid email or password",
+                            )
+                        response.raise_for_status()
+                        auth_data = await response.json()
+                        # _LOGGER.debug("Authentication response data: %s", auth_data) # Removed
 
-        # Should not reach here
-        raise ApiError("Authentication failed after all retries")
+                        self._token = auth_data.get("token")
+                        if not self._token:
+                            _LOGGER.error(
+                                "Token not found in authentication response: %s", auth_data,
+                            )
+                            raise ApiAuthError("Token not received from API.")
+
+                        self._token_expiry_time = datetime.now(timezone.utc) + timedelta(
+                            hours=1,
+                        )
+                        _LOGGER.info(
+                            "Successfully authenticated %s - Token expires: %s",
+                            self._email,
+                            self._token_expiry_time.isoformat(),
+                        )
+                        _LOGGER.debug(
+                            "Token obtained: %s...",
+                            self._token[:10] if self._token else "None",
+                        )
+                        return self._token
+                except (asyncio.TimeoutError, aiohttp.ClientError) as e:
+                    if attempt < self._max_retries - 1:
+                        # Exponential backoff with jitter for auth retries
+                        base_wait = min(self._base_delay * (2**attempt), self._max_delay)
+                        jitter = base_wait * self._jitter_range * (2 * random.random() - 1)
+                        wait_time = max(0.1, base_wait + jitter)
+                        _LOGGER.warning(
+                            "Authentication network error: %s. Retrying in %.2f seconds (attempt %s/%s)",
+                            e,
+                            wait_time,
+                            attempt + 1,
+                            self._max_retries,
+                        )
+                        await sleep(wait_time)
+                    else:
+                        _LOGGER.error(
+                            "Error during authentication after %s retries: %s",
+                            self._max_retries,
+                            e,
+                        )
+                        raise ApiError(f"Error during authentication: {e}") from e
+                except ApiAuthError:
+                    raise  # Don't retry on auth errors (bad credentials)
+                except Exception as e:
+                    _LOGGER.exception("Unexpected error during authentication.")
+                    raise ApiError(f"Unexpected error during authentication: {e}") from e
+
+            # Should not reach here
+            raise ApiError("Authentication failed after all retries")
 
     async def authenticate(self) -> None:
         """Explicitly authenticate and get a token (used by config flow)."""
@@ -444,14 +467,8 @@ class TibberApiClient:
             _LOGGER.error("Invalid home_id provided: %s", home_id)
             raise ApiError("Invalid home_id - Must be a non-empty string")
 
-        # Validate UUID format (8-4-4-4-12 hex characters)
-        import re
-
-        uuid_pattern = re.compile(
-            r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
-            re.IGNORECASE,
-        )
-        if not uuid_pattern.match(home_id):
+        # Validate UUID format
+        if not UUID_PATTERN.match(home_id):
             _LOGGER.error("Invalid home_id format (not UUID): %s", home_id[:8])
             raise ApiError("Invalid home_id - Must be a valid UUID")
 
@@ -532,13 +549,7 @@ class TibberApiClient:
             raise ApiError("Invalid home_id provided")
 
         # Validate UUID format for home_id
-        import re
-
-        uuid_pattern = re.compile(
-            r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
-            re.IGNORECASE,
-        )
-        if not uuid_pattern.match(home_id):
+        if not UUID_PATTERN.match(home_id):
             _LOGGER.error("Invalid home_id format in rewards history: %s", home_id[:8])
             raise ApiError("Invalid home_id - Must be a valid UUID")
 

@@ -112,8 +112,8 @@ class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignor
                 _LOGGER.exception("Unexpected error during authentication: %s", str(e))
                 errors["base"] = "unknown"
             finally:
-                # Clean up the session if authentication failed
-                if "session" in locals() and errors:
+                # Clean up the session on errors (success case handled by HA)
+                if errors:
                     await session.close()
 
         return self.async_show_form(

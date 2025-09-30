@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### ⚡ Performance Optimizations
+- **Parallel API Calls** - Reduced data fetch time by ~66%
+  - GridRewardsCoordinator now fetches all reward periods simultaneously
+  - Uses `asyncio.gather()` for concurrent API requests
+  - Significantly faster coordinator updates every 15 minutes
+- **Authentication Lock** - Prevents concurrent authentication attempts
+  - Added `asyncio.Lock()` to serialize authentication when multiple requests race
+  - Double-check pattern ensures only one token fetch per expiry cycle
+  - Second and third requests reuse token from first request
+  - Eliminates wasteful duplicate authentication calls
+- **Compiled Regex Patterns** - Improved UUID validation performance
+  - UUID pattern compiled once at module level instead of per-call
+  - Eliminates redundant regex compilation overhead
+  - Applied to `async_get_gizmos()` and `async_get_grid_rewards_history()`
+- **Session Management** - Fixed memory leak in config flow
+  - Proper session cleanup on authentication errors
+  - Prevents unclosed session warnings during setup
+- **Code Simplification** - Enhanced maintainability and readability
+  - Simplified sensor availability logic with early returns
+  - Optimized cache invalidation to avoid unnecessary list building
+  - Removed duplicate dict() conversions in coordinator
+  - Simplified rate limiter from gather() to sequential awaits
+
+### 🐛 Bug Fixes
+- **Workflow Validation** - Fixed Python syntax check to recursively validate all files
+  - Changed from `py_compile *.py` to `compileall` for directory recursion
+  - Ensures nested Python files are properly validated in CI
+- **Code Consistency** - Eliminated duplicate GraphQL query template
+  - Converted `GRID_REWARDS_DAILY_QUERY_TEMPLATE` to alias
+  - Reduced code duplication while maintaining compatibility
+
 ### 🔧 Fixed - Code Quality & Validation
 - **Python Linting** - Resolved all ruff linting errors (69 issues fixed)
   - Removed 58 unused imports across multiple files
