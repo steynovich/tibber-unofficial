@@ -8,7 +8,7 @@ import pytest
 
 from custom_components.tibber_unofficial.const import DOMAIN
 from custom_components.tibber_unofficial.sensor import (
-    SENSOR_DESCRIPTIONS,
+    SENSOR_DEFINITIONS,
     GridRewardsSensor,
     async_setup_entry,
 )
@@ -107,19 +107,19 @@ def test_sensor_state_current_day():
 
     # Test Homevolt sensor
     sensor_desc = next(
-        s for s in SENSOR_DESCRIPTIONS if s.key == "current_day_homevolt"
+        s for s in SENSOR_DEFINITIONS if s.key == "current_day_homevolt"
     )
     sensor = GridRewardsSensor(coordinator, mock_config, sensor_desc)
     assert sensor.native_value == 1.5
     assert sensor.native_unit_of_measurement == "EUR"
 
     # Test EV sensor
-    sensor_desc = next(s for s in SENSOR_DESCRIPTIONS if s.key == "current_day_ev")
+    sensor_desc = next(s for s in SENSOR_DEFINITIONS if s.key == "current_day_ev")
     sensor = GridRewardsSensor(coordinator, mock_config, sensor_desc)
     assert sensor.native_value == 1.0
 
     # Test Total sensor
-    sensor_desc = next(s for s in SENSOR_DESCRIPTIONS if s.key == "current_day_total")
+    sensor_desc = next(s for s in SENSOR_DEFINITIONS if s.key == "current_day_total")
     sensor = GridRewardsSensor(coordinator, mock_config, sensor_desc)
     assert sensor.native_value == 2.5
 
@@ -166,7 +166,7 @@ def test_sensor_state_current_month():
 
     # Test current month Homevolt
     sensor_desc = next(
-        s for s in SENSOR_DESCRIPTIONS if s.key == "current_month_homevolt"
+        s for s in SENSOR_DEFINITIONS if s.key == "current_month_homevolt"
     )
     sensor = GridRewardsSensor(coordinator, mock_config, sensor_desc)
     assert sensor.native_value == 30.0
@@ -205,7 +205,7 @@ def test_sensor_state_previous_month():
 
     # Test previous month total
     sensor_desc = next(
-        s for s in SENSOR_DESCRIPTIONS if s.key == "previous_month_total"
+        s for s in SENSOR_DEFINITIONS if s.key == "previous_month_total"
     )
     sensor = GridRewardsSensor(coordinator, mock_config, sensor_desc)
     assert sensor.native_value == 45.0
@@ -252,7 +252,7 @@ def test_sensor_state_current_year():
     mock_config.data = {"home_name": "Test Home"}
 
     # Test current year total (should sum all rewards in current year)
-    sensor_desc = next(s for s in SENSOR_DESCRIPTIONS if s.key == "current_year_total")
+    sensor_desc = next(s for s in SENSOR_DEFINITIONS if s.key == "current_year_total")
     sensor = GridRewardsSensor(coordinator, mock_config, sensor_desc)
     assert sensor.native_value == 95.0  # 50 + 45
 
@@ -266,7 +266,7 @@ def test_sensor_no_data():
     mock_config.unique_id = "test@example.com"
     mock_config.data = {"home_name": "Test Home"}
 
-    sensor_desc = next(s for s in SENSOR_DESCRIPTIONS if s.key == "current_day_total")
+    sensor_desc = next(s for s in SENSOR_DEFINITIONS if s.key == "current_day_total")
     sensor = GridRewardsSensor(coordinator, mock_config, sensor_desc)
     assert sensor.native_value == 0.0
 
@@ -298,7 +298,7 @@ def test_sensor_attributes():
     mock_config.unique_id = "test@example.com"
     mock_config.data = {"home_name": "Test Home"}
 
-    sensor_desc = next(s for s in SENSOR_DESCRIPTIONS if s.key == "current_day_total")
+    sensor_desc = next(s for s in SENSOR_DEFINITIONS if s.key == "current_day_total")
     sensor = GridRewardsSensor(coordinator, mock_config, sensor_desc)
 
     # Test unique ID
