@@ -1,8 +1,8 @@
 """Tests for caching functionality."""
 
+from datetime import UTC, datetime
 import time
 from unittest.mock import patch
-from datetime import datetime, timezone
 
 from custom_components.tibber_unofficial.cache import ApiCache, SmartCache
 
@@ -165,7 +165,7 @@ def test_smart_cache_adaptive_ttl(mock_datetime):
     cache = SmartCache()
 
     # Test near end of day - should get shorter TTL
-    mock_now = datetime(2024, 1, 15, 23, 0, 0, tzinfo=timezone.utc)  # 11 PM UTC
+    mock_now = datetime(2024, 1, 15, 23, 0, 0, tzinfo=UTC)  # 11 PM UTC
     mock_datetime.now.return_value = mock_now
 
     cache.set_smart("get_rewards", {"rewards": 100}, "rewards_daily")

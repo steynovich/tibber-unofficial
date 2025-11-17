@@ -1,14 +1,15 @@
 """Tests for the Tibber API client."""
 
-import pytest
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, patch
+
 from aiohttp import ClientError
-from datetime import datetime, timezone, timedelta
+import pytest
 
 from custom_components.tibber_unofficial.api import (
-    TibberApiClient,
-    ApiError,
     ApiAuthError,
+    ApiError,
+    TibberApiClient,
 )
 
 
@@ -64,7 +65,7 @@ async def test_get_homes_success():
         session=mock_session, email="test@example.com", password="password"
     )
     client._token = "test_token"
-    client._token_expiry_time = datetime.now(timezone.utc) + timedelta(hours=1)
+    client._token_expiry_time = datetime.now(UTC) + timedelta(hours=1)
 
     mock_response = AsyncMock()
     mock_response.status = 200
@@ -100,7 +101,7 @@ async def test_get_gizmos_success():
         session=mock_session, email="test@example.com", password="password"
     )
     client._token = "test_token"
-    client._token_expiry_time = datetime.now(timezone.utc) + timedelta(hours=1)
+    client._token_expiry_time = datetime.now(UTC) + timedelta(hours=1)
 
     mock_response = AsyncMock()
     mock_response.status = 200
@@ -135,7 +136,7 @@ async def test_get_grid_rewards_history_success():
         session=mock_session, email="test@example.com", password="password"
     )
     client._token = "test_token"
-    client._token_expiry_time = datetime.now(timezone.utc) + timedelta(hours=1)
+    client._token_expiry_time = datetime.now(UTC) + timedelta(hours=1)
 
     mock_response = AsyncMock()
     mock_response.status = 200
@@ -180,7 +181,7 @@ async def test_cache_integration():
         session=mock_session, email="test@example.com", password="password"
     )
     client._token = "test_token"
-    client._token_expiry_time = datetime.now(timezone.utc) + timedelta(hours=1)
+    client._token_expiry_time = datetime.now(UTC) + timedelta(hours=1)
 
     mock_response = AsyncMock()
     mock_response.status = 200
@@ -210,7 +211,7 @@ async def test_token_refresh_on_401():
         session=mock_session, email="test@example.com", password="password"
     )
     client._token = "expired_token"
-    client._token_expiry_time = datetime.now(timezone.utc) + timedelta(hours=1)
+    client._token_expiry_time = datetime.now(UTC) + timedelta(hours=1)
 
     # First call returns 401, triggers re-auth, then succeeds
     mock_response_401 = AsyncMock()
@@ -256,7 +257,7 @@ async def test_api_error_handling():
         session=mock_session, email="test@example.com", password="password"
     )
     client._token = "test_token"
-    client._token_expiry_time = datetime.now(timezone.utc) + timedelta(hours=1)
+    client._token_expiry_time = datetime.now(UTC) + timedelta(hours=1)
 
     mock_session.post.side_effect = ClientError()
 
@@ -333,7 +334,7 @@ async def test_token_expiry_buffer():
     from datetime import timedelta
 
     # Set token that expires in 8 minutes (should trigger refresh)
-    future_time = datetime.now(timezone.utc) + timedelta(minutes=8)
+    future_time = datetime.now(UTC) + timedelta(minutes=8)
     client._token_expiry_time = future_time
     client._access_token = "test_token"
 
@@ -341,7 +342,7 @@ async def test_token_expiry_buffer():
     assert client._is_token_expired() is True
 
     # Set token that expires in 12 minutes (should not trigger refresh)
-    future_time = datetime.now(timezone.utc) + timedelta(minutes=12)
+    future_time = datetime.now(UTC) + timedelta(minutes=12)
     client._token_expiry_time = future_time
 
     # Should indicate token is still valid (12 minutes > 10 minute buffer)
@@ -415,8 +416,8 @@ async def test_period_bounds_timezone_aware():
         # Should be timezone-aware UTC times
         assert start_time.tzinfo is not None
         assert end_time.tzinfo is not None
-        assert start_time.tzinfo == timezone.utc
-        assert end_time.tzinfo == timezone.utc
+        assert start_time.tzinfo == UTC
+        assert end_time.tzinfo == UTC
 
 
 @pytest.mark.asyncio
@@ -432,7 +433,7 @@ async def test_retry_mechanism_with_exponential_backoff():
     )
 
     client._token = "test_token"
-    client._token_expiry_time = datetime.now(timezone.utc) + timedelta(hours=1)
+    client._token_expiry_time = datetime.now(UTC) + timedelta(hours=1)
 
     # Mock responses: fail twice, then succeed
     mock_response_fail = AsyncMock()

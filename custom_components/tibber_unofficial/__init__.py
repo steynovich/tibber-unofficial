@@ -3,49 +3,49 @@
 from __future__ import annotations
 
 import asyncio
-import logging
-from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Any
 from collections import defaultdict
-import aiohttp
+from datetime import UTC, datetime, timedelta
+import logging
+from typing import Any
 
-from homeassistant.util import dt as dt_util
+import aiohttp
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.util import dt as dt_util
 
+from .api import ApiAuthError, ApiError, TibberApiClient
 from .const import (
-    DOMAIN,
-    PLATFORMS,
-    DEFAULT_REWARDS_SCAN_INTERVAL,
-    DEFAULT_GIZMO_SCAN_INTERVAL,
     CONF_EMAIL,
-    CONF_PASSWORD,
-    CONF_HOME_ID,
     CONF_GIZMO_IDS,
-    DESIRED_GIZMO_TYPES,
-    GRID_REWARDS_EV_CURRENT_MONTH,
-    GRID_REWARDS_HOMEVOLT_CURRENT_MONTH,
-    GRID_REWARDS_TOTAL_CURRENT_MONTH,
-    GRID_REWARDS_EV_PREVIOUS_MONTH,
-    GRID_REWARDS_HOMEVOLT_PREVIOUS_MONTH,
-    GRID_REWARDS_TOTAL_PREVIOUS_MONTH,
-    GRID_REWARDS_EV_YEAR,
-    GRID_REWARDS_HOMEVOLT_YEAR,
-    GRID_REWARDS_TOTAL_YEAR,
-    GRID_REWARDS_EV_CURRENT_DAY,
-    GRID_REWARDS_HOMEVOLT_CURRENT_DAY,
-    GRID_REWARDS_TOTAL_CURRENT_DAY,
-    KEY_CURRENCY,
-    COORDINATOR_REWARDS,
+    CONF_HOME_ID,
+    CONF_PASSWORD,
     COORDINATOR_GIZMOS,
+    COORDINATOR_REWARDS,
+    DEFAULT_GIZMO_SCAN_INTERVAL,
+    DEFAULT_REWARDS_SCAN_INTERVAL,
+    DESIRED_GIZMO_TYPES,
+    DOMAIN,
+    GRID_REWARDS_EV_CURRENT_DAY,
+    GRID_REWARDS_EV_CURRENT_MONTH,
+    GRID_REWARDS_EV_PREVIOUS_MONTH,
+    GRID_REWARDS_EV_YEAR,
+    GRID_REWARDS_HOMEVOLT_CURRENT_DAY,
+    GRID_REWARDS_HOMEVOLT_CURRENT_MONTH,
+    GRID_REWARDS_HOMEVOLT_PREVIOUS_MONTH,
+    GRID_REWARDS_HOMEVOLT_YEAR,
+    GRID_REWARDS_TOTAL_CURRENT_DAY,
+    GRID_REWARDS_TOTAL_CURRENT_MONTH,
+    GRID_REWARDS_TOTAL_PREVIOUS_MONTH,
+    GRID_REWARDS_TOTAL_YEAR,
+    KEY_CURRENCY,
+    PLATFORMS,
 )
-from .api import TibberApiClient, ApiAuthError, ApiError
-from .storage import RateLimiterStorage
-from .services import async_setup_services, async_unload_services
 from .repairs import async_create_issue, async_delete_issue
+from .services import async_setup_services, async_unload_services
+from .storage import RateLimiterStorage
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -105,10 +105,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Get update intervals from options or use defaults
     rewards_interval_minutes = entry.options.get(
-        "rewards_scan_interval", int(DEFAULT_REWARDS_SCAN_INTERVAL.total_seconds() / 60),
+        "rewards_scan_interval",
+        int(DEFAULT_REWARDS_SCAN_INTERVAL.total_seconds() / 60),
     )
     gizmo_interval_hours = entry.options.get(
-        "gizmo_scan_interval", int(DEFAULT_GIZMO_SCAN_INTERVAL.total_seconds() / 3600),
+        "gizmo_scan_interval",
+        int(DEFAULT_GIZMO_SCAN_INTERVAL.total_seconds() / 3600),
     )
 
     _LOGGER.debug(
@@ -125,7 +127,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _LOGGER.debug("Rewards coordinator initialized successfully")
 
     _LOGGER.debug(
-        "Initializing gizmo coordinator (interval: %d hours)", gizmo_interval_hours,
+        "Initializing gizmo coordinator (interval: %d hours)",
+        gizmo_interval_hours,
     )
     gizmo_coordinator = GizmoUpdateCoordinator(
         hass,
@@ -231,7 +234,8 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
                 hours=gizmo_interval_hours,
             )
             _LOGGER.debug(
-                "Updated gizmo coordinator interval to %d hours", gizmo_interval_hours,
+                "Updated gizmo coordinator interval to %d hours",
+                gizmo_interval_hours,
             )
 
         # Request immediate refresh with new intervals
@@ -245,7 +249,8 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     _LOGGER.info(
-        "Unloading Tibber Unofficial for %s", entry.data.get(CONF_EMAIL, "unknown"),
+        "Unloading Tibber Unofficial for %s",
+        entry.data.get(CONF_EMAIL, "unknown"),
     )
     _LOGGER.debug("Entry ID being unloaded: %s", entry.entry_id)
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
@@ -258,7 +263,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     cache_task.cancel()
                     try:
                         await asyncio.wait_for(cache_task, timeout=1.0)
-                    except (asyncio.CancelledError, asyncio.TimeoutError):
+                    except (TimeoutError, asyncio.CancelledError):
                         pass
                     except Exception as e:
                         _LOGGER.debug("Error cancelling cache task: %s", e)
@@ -288,7 +293,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # Unload services if this is the last entry
         remaining_entries = [
             e
-            for e in hass.data.get(DOMAIN, {}).keys()
+            for e in hass.data.get(DOMAIN, {})
             if e != "sessions" and isinstance(hass.data[DOMAIN].get(e), dict)
         ]
         if not remaining_entries:
@@ -318,12 +323,16 @@ class GridRewardsCoordinator(DataUpdateCoordinator):
         self.client = client
         self.home_id = home_id
         _LOGGER.debug(
-            "GridRewardsCoordinator initialized with interval: %s", self.update_interval,
+            "GridRewardsCoordinator initialized with interval: %s",
+            self.update_interval,
         )
 
     async def _fetch_reward_data_for_period(
-        self, period_name: str, from_date: datetime, to_date: datetime,
-    ) -> Dict[str, Any]:
+        self,
+        period_name: str,
+        from_date: datetime,
+        to_date: datetime,
+    ) -> dict[str, Any]:
         from_date_str = from_date.isoformat()
         to_date_str = to_date.isoformat()
         _LOGGER.debug(
@@ -359,7 +368,7 @@ class GridRewardsCoordinator(DataUpdateCoordinator):
                 "to_date_api": None,
             }
 
-    async def _async_update_data(self) -> Dict[str, Any] | None:
+    async def _async_update_data(self) -> dict[str, Any] | None:
         _LOGGER.debug("Starting rewards data update for home %s", self.home_id[:8])
         try:
             # Use Home Assistant's timezone-aware datetime
@@ -367,9 +376,13 @@ class GridRewardsCoordinator(DataUpdateCoordinator):
 
             # Calculate date ranges for current month, previous month, and year
             # Ensure we're working in UTC for API calls
-            today_utc = today_datetime.astimezone(timezone.utc)
+            today_utc = today_datetime.astimezone(UTC)
             first_day_current_month = today_utc.replace(
-                day=1, hour=0, minute=0, second=0, microsecond=0,
+                day=1,
+                hour=0,
+                minute=0,
+                second=0,
+                microsecond=0,
             )
             if today_utc.month == 12:
                 first_day_next_month = today_utc.replace(
@@ -393,10 +406,19 @@ class GridRewardsCoordinator(DataUpdateCoordinator):
 
             last_day_previous_month_calc = first_day_current_month - timedelta(days=1)
             first_day_previous_month = last_day_previous_month_calc.replace(
-                day=1, hour=0, minute=0, second=0, microsecond=0,
+                day=1,
+                hour=0,
+                minute=0,
+                second=0,
+                microsecond=0,
             )
             first_day_current_year = today_utc.replace(
-                month=1, day=1, hour=0, minute=0, second=0, microsecond=0,
+                month=1,
+                day=1,
+                hour=0,
+                minute=0,
+                second=0,
+                microsecond=0,
             )
 
             # Fetch data for all periods in parallel for better performance
@@ -406,13 +428,19 @@ class GridRewardsCoordinator(DataUpdateCoordinator):
                 year_api_data,
             ) = await asyncio.gather(
                 self._fetch_reward_data_for_period(
-                    "Current Month", first_day_current_month, first_day_next_month,
+                    "Current Month",
+                    first_day_current_month,
+                    first_day_next_month,
                 ),
                 self._fetch_reward_data_for_period(
-                    "Previous Month", first_day_previous_month, first_day_current_month,
+                    "Previous Month",
+                    first_day_previous_month,
+                    first_day_current_month,
                 ),
                 self._fetch_reward_data_for_period(
-                    "Year", first_day_current_year, first_day_next_month,
+                    "Year",
+                    first_day_current_year,
+                    first_day_next_month,
                 ),
             )
 
@@ -473,7 +501,8 @@ class GridRewardsCoordinator(DataUpdateCoordinator):
                 stats = self.client.get_cache_stats()
                 if stats["total_requests"] > 10:  # Only log after some requests
                     _LOGGER.debug(
-                        "API cache performance: %.1f%% hit rate", stats["hit_rate"],
+                        "API cache performance: %.1f%% hit rate",
+                        stats["hit_rate"],
                     )
 
             return compiled_data
@@ -505,7 +534,7 @@ class GridRewardsCoordinator(DataUpdateCoordinator):
                     self.hass,
                     "rate_limit_exceeded",
                     DOMAIN,
-                        translation_key="rate_limit_exceeded",
+                    translation_key="rate_limit_exceeded",
                     translation_placeholders={
                         "current_interval": str(current_interval),
                         "recommended_interval": str(max(30, current_interval * 2)),
@@ -515,10 +544,10 @@ class GridRewardsCoordinator(DataUpdateCoordinator):
                         "current_interval_minutes": current_interval,
                     },
                 )
-            raise UpdateFailed(f"Failed to fetch rewards data: {str(err)}") from err
+            raise UpdateFailed(f"Failed to fetch rewards data: {err!s}") from err
         except Exception as err:
             _LOGGER.exception("Unexpected error updating rewards data: %s", str(err))
-            raise UpdateFailed(f"Unexpected error: {str(err)}") from err
+            raise UpdateFailed(f"Unexpected error: {err!s}") from err
 
 
 class GizmoUpdateCoordinator(DataUpdateCoordinator):
@@ -529,7 +558,7 @@ class GizmoUpdateCoordinator(DataUpdateCoordinator):
         hass: HomeAssistant,
         client: TibberApiClient,
         home_id: str,
-        initial_gizmos: Dict[str, List[str]],
+        initial_gizmos: dict[str, list[str]],
         update_interval: timedelta | None = None,
     ):
         """Initialize with configurable update interval."""
@@ -542,14 +571,15 @@ class GizmoUpdateCoordinator(DataUpdateCoordinator):
         self.client = client
         self.home_id = home_id
         _LOGGER.debug(
-            "GizmoUpdateCoordinator initialized with interval: %s", self.update_interval,
+            "GizmoUpdateCoordinator initialized with interval: %s",
+            self.update_interval,
         )
 
-    async def _async_update_data(self) -> Dict[str, List[str]]:
+    async def _async_update_data(self) -> dict[str, list[str]]:
         _LOGGER.debug("Starting gizmo data update for home %s", self.home_id[:8])
         try:
             gizmos_list = await self.client.async_get_gizmos(self.home_id)
-            gizmo_ids_by_type: Dict[str, List[str]] = defaultdict(list)
+            gizmo_ids_by_type: dict[str, list[str]] = defaultdict(list)
             if isinstance(gizmos_list, list):
                 for gizmo in gizmos_list:
                     gizmo_type = gizmo.get("type")
@@ -586,7 +616,7 @@ class GizmoUpdateCoordinator(DataUpdateCoordinator):
             ) from err
         except ApiError as err:
             _LOGGER.error("API error during gizmo update: %s", str(err))
-            raise UpdateFailed(f"Failed to fetch gizmo data: {str(err)}") from err
+            raise UpdateFailed(f"Failed to fetch gizmo data: {err!s}") from err
         except Exception as err:
             _LOGGER.exception("Unexpected error updating gizmo data: %s", str(err))
-            raise UpdateFailed(f"Unexpected error: {str(err)}") from err
+            raise UpdateFailed(f"Unexpected error: {err!s}") from err

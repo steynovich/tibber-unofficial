@@ -1,15 +1,15 @@
 """Diagnostics support for Tibber Unofficial integration."""
 
+from datetime import UTC, datetime
 import logging
-from typing import Dict, Any
-from datetime import datetime, timezone
+from typing import Any
 
+from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntry
-from homeassistant.components.diagnostics import async_redact_data
 
-from .const import DOMAIN, COORDINATOR_REWARDS, COORDINATOR_GIZMOS
+from .const import COORDINATOR_GIZMOS, COORDINATOR_REWARDS, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,8 +28,9 @@ TO_REDACT = {
 
 
 async def async_get_config_entry_diagnostics(
-    hass: HomeAssistant, entry: ConfigEntry,
-) -> Dict[str, Any]:
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+) -> dict[str, Any]:
     """Return diagnostics for a config entry."""
     data = hass.data[DOMAIN][entry.entry_id]
 
@@ -38,7 +39,7 @@ async def async_get_config_entry_diagnostics(
     gizmos_coordinator = data.get(COORDINATOR_GIZMOS)
     api_client = data.get("api_client")
 
-    diagnostics_data: Dict[str, Any] = {
+    diagnostics_data: dict[str, Any] = {
         "entry": {
             "title": entry.title,
             "version": entry.version,
@@ -50,7 +51,7 @@ async def async_get_config_entry_diagnostics(
         "coordinators": {},
         "api_client": {},
         "system_info": {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "ha_version": hass.config.version,
             "integration_version": entry.version,
         },
@@ -73,7 +74,8 @@ async def async_get_config_entry_diagnostics(
             if rewards_coordinator.data
             else [],
             "home_id_redacted": async_redact_data(
-                {"home_id": rewards_coordinator.home_id}, TO_REDACT,
+                {"home_id": rewards_coordinator.home_id},
+                TO_REDACT,
             )["home_id"],
         }
 
@@ -92,7 +94,8 @@ async def async_get_config_entry_diagnostics(
             if gizmos_coordinator.data
             else [],
             "home_id_redacted": async_redact_data(
-                {"home_id": gizmos_coordinator.home_id}, TO_REDACT,
+                {"home_id": gizmos_coordinator.home_id},
+                TO_REDACT,
             )["home_id"],
         }
 
@@ -103,7 +106,8 @@ async def async_get_config_entry_diagnostics(
             "has_token": bool(getattr(api_client, "_token", None)),
             "token_expires": (
                 expiry_time.isoformat()
-                if (expiry_time := getattr(api_client, "_token_expiry_time", None)) is not None
+                if (expiry_time := getattr(api_client, "_token_expiry_time", None))
+                is not None
                 else None
             ),
             "cache_stats": api_client.get_cache_stats()
@@ -111,7 +115,9 @@ async def async_get_config_entry_diagnostics(
             else {},
             "rate_limiter_stats": {
                 "hourly_tokens": getattr(
-                    api_client._rate_limiter.hourly, "tokens", None,
+                    api_client._rate_limiter.hourly,
+                    "tokens",
+                    None,
                 ),
                 "burst_tokens": getattr(api_client._rate_limiter.burst, "tokens", None),
             }
@@ -124,7 +130,8 @@ async def async_get_config_entry_diagnostics(
     device_registry = hass.helpers.device_registry.async_get(hass)
 
     entities = hass.helpers.entity_registry.async_entries_for_config_entry(
-        entity_registry, entry.entry_id,
+        entity_registry,
+        entry.entry_id,
     )
 
     for entity in entities:
@@ -152,7 +159,8 @@ async def async_get_config_entry_diagnostics(
 
     # Add device diagnostics
     devices = hass.helpers.device_registry.async_entries_for_config_entry(
-        device_registry, entry.entry_id,
+        device_registry,
+        entry.entry_id,
     )
 
     for device in devices:
@@ -163,7 +171,8 @@ async def async_get_config_entry_diagnostics(
             "sw_version": device.sw_version,
             "hw_version": device.hw_version,
             "identifiers": async_redact_data(
-                {"ids": list(device.identifiers)}, TO_REDACT,
+                {"ids": list(device.identifiers)},
+                TO_REDACT,
             )["ids"],
             "connections": list(device.connections),
             "disabled": device.disabled,
@@ -175,8 +184,10 @@ async def async_get_config_entry_diagnostics(
 
 
 async def async_get_device_diagnostics(
-    hass: HomeAssistant, entry: ConfigEntry, device: DeviceEntry,
-) -> Dict[str, Any]:
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    device: DeviceEntry,
+) -> dict[str, Any]:
     """Return diagnostics for a device entry."""
     data = await async_get_config_entry_diagnostics(hass, entry)
 
@@ -193,7 +204,8 @@ async def async_get_device_diagnostics(
     # Filter entities to only those for this device
     entity_registry = hass.helpers.entity_registry.async_get(hass)
     device_entities = hass.helpers.entity_registry.async_entries_for_device(
-        entity_registry, device.id,
+        entity_registry,
+        device.id,
     )
 
     filtered_entities = []

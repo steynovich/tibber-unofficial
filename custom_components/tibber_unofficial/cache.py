@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import logging
-import time
-from typing import Any, Dict, Tuple
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 import hashlib
 import json
+import logging
+import time
+from typing import Any
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,8 +21,9 @@ class ApiCache:
         Args:
             default_ttl: Default time-to-live for cache entries in seconds
         """
-        self._cache: Dict[
-            str, Tuple[Any, float, float],
+        self._cache: dict[
+            str,
+            tuple[Any, float, float],
         ] = {}  # key -> (data, expiry_time, cached_at)
         self._default_ttl = default_ttl
         self._hit_count = 0
@@ -72,7 +73,9 @@ class ApiCache:
         _LOGGER.debug("Cache MISS for %s", method)
         return None
 
-    def set(self, method: str, data: Any, ttl: int | None = None, **kwargs: Any) -> None:
+    def set(
+        self, method: str, data: Any, ttl: int | None = None, **kwargs: Any
+    ) -> None:
         """Store data in cache.
 
         Args:
@@ -130,7 +133,7 @@ class ApiCache:
         if expired_keys:
             _LOGGER.debug("Cleaned up %d expired cache entries", len(expired_keys))
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         total_requests = self._hit_count + self._miss_count
         hit_rate = (self._hit_count / total_requests * 100) if total_requests > 0 else 0
@@ -180,18 +183,21 @@ class SmartCache(ApiCache):
         # Adaptive TTL based on time patterns
         if data_type == "rewards_daily":
             # Cache for shorter time near end of day (when rewards might update)
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             hours_until_midnight = 24 - now.hour
             if hours_until_midnight <= 2:
                 ttl = 60  # 1 minute cache near midnight
         elif data_type == "rewards_monthly":
             # Cache for shorter time near end of month
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             days_in_month = 31  # Approximate
             if now.day >= days_in_month - 2:
                 ttl = 300  # 5 minute cache near month end
 
         self.set(method, data, ttl, **kwargs)
         _LOGGER.debug(
-            "Smart cached %s as %s type for %d seconds", method, data_type, ttl,
+            "Smart cached %s as %s type for %d seconds",
+            method,
+            data_type,
+            ttl,
         )

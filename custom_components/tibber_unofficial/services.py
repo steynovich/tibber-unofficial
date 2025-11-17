@@ -1,12 +1,12 @@
 """Services for Tibber Unofficial integration."""
 
 import logging
-import voluptuous as vol
 
 from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.helpers import config_validation as cv, entity_registry as er
+import voluptuous as vol
 
-from .const import DOMAIN, COORDINATOR_REWARDS
+from .const import COORDINATOR_REWARDS, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         else:
             # Refresh all entries
             refreshed_count = 0
-            for entry_id, data in hass.data[DOMAIN].items():
+            for _entry_id, data in hass.data[DOMAIN].items():
                 if isinstance(data, dict):  # Skip non-dict entries like 'sessions'
                     coordinator = data.get(COORDINATOR_REWARDS)
                     if coordinator:
@@ -76,7 +76,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         else:
             # Clear cache for all entries
             cleared_count = 0
-            for entry_id, data in hass.data[DOMAIN].items():
+            for _entry_id, data in hass.data[DOMAIN].items():
                 if isinstance(data, dict):  # Skip non-dict entries like 'sessions'
                     api_client = data.get("api_client")
                     if api_client and hasattr(api_client, "_cache"):

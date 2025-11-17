@@ -2,25 +2,25 @@
 
 from __future__ import annotations
 
-import logging
-import voluptuous as vol
-from typing import Any, Dict, List
 from collections import defaultdict
-import aiohttp
+import logging
+from typing import Any
 
+import aiohttp
 from homeassistant import config_entries
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 import homeassistant.helpers.config_validation as cv
+import voluptuous as vol
 
+from .api import ApiAuthError, ApiError, TibberApiClient
 from .const import (
-    DOMAIN,
     CONF_EMAIL,
-    CONF_PASSWORD,
-    CONF_HOME_ID,
     CONF_GIZMO_IDS,
+    CONF_HOME_ID,
+    CONF_PASSWORD,
     DESIRED_GIZMO_TYPES,
+    DOMAIN,
 )
-from .api import TibberApiClient, ApiAuthError, ApiError
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -29,9 +29,6 @@ _LOGGER = logging.getLogger(__name__)
 #   default: info
 #   logs:
 #     custom_components.tibber_unofficial: debug
-
-
-
 
 
 USER_DATA_SCHEMA = vol.Schema(
@@ -52,11 +49,11 @@ class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignor
     @config_entries.HANDLERS.register(DOMAIN)
     def async_get_options_flow(config_entry: Any) -> Any:
         """Get the options flow for this handler."""
-        from .options_flow import TibberOptionsFlow
+        from .options_flow import TibberOptionsFlow  # noqa: PLC0415
 
         return TibberOptionsFlow(config_entry)
 
-    user_auth_data: Dict[str, Any]
+    user_auth_data: dict[str, Any]
     api_client: TibberApiClient
 
     def __init__(self) -> None:
@@ -64,9 +61,9 @@ class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignor
         super().__init__()
         self.user_auth_data = {}
 
-    async def async_step_user(self, user_input: Dict[str, Any] | None = None) -> Any:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> Any:
         """Handle the initial step (email/password authentication)."""
-        errors: Dict[str, str] = {}
+        errors: dict[str, str] = {}
         if user_input is not None:
             try:
                 # Validate and sanitize inputs
@@ -85,12 +82,15 @@ class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignor
             # Create a temporary session for config flow
             timeout = aiohttp.ClientTimeout(total=30, connect=10, sock_read=20)
             session = async_create_clientsession(
-                self.hass, timeout=timeout,
+                self.hass,
+                timeout=timeout,
             )
 
             try:
                 self.api_client = TibberApiClient(
-                    session=session, email=email, password=password,
+                    session=session,
+                    email=email,
+                    password=password,
                 )
                 self.user_auth_data = {
                     CONF_EMAIL: email,
@@ -117,12 +117,16 @@ class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignor
                     await session.close()
 
         return self.async_show_form(
-            step_id="user", data_schema=USER_DATA_SCHEMA, errors=errors,
+            step_id="user",
+            data_schema=USER_DATA_SCHEMA,
+            errors=errors,
         )
 
-    async def async_step_select_home(self, user_input: Dict[str, Any] | None = None) -> Any:
+    async def async_step_select_home(
+        self, user_input: dict[str, Any] | None = None
+    ) -> Any:
         """Handle fetching homes, selecting one, and then fetching gizmos."""
-        errors: Dict[str, str] = {}
+        errors: dict[str, str] = {}
         try:
             if not hasattr(self, "api_client") or not self.api_client:
                 _LOGGER.error("API client not initialized - This should not happen")
@@ -147,7 +151,10 @@ class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignor
                 _LOGGER.debug(
                     "Home energy deal status: %s",
                     [
-                        {"id": h.get("id")[:8] if h.get("id") else None, "deal": h.get("hasSignedEnergyDeal")}  # type: ignore[index]
+                        {
+                            "id": h.get("id")[:8] if h.get("id") else None,
+                            "deal": h.get("hasSignedEnergyDeal"),
+                        }  # type: ignore[index]
                         for h in homes
                     ],
                 )
@@ -158,7 +165,8 @@ class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignor
 
             if not selected_home_id:
                 _LOGGER.error(
-                    "Selected home has no ID: %s. Aborting flow.", selected_home,
+                    "Selected home has no ID: %s. Aborting flow.",
+                    selected_home,
                 )
                 return self.async_abort(reason="home_id_missing")
 
@@ -175,7 +183,7 @@ class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignor
 
             _LOGGER.debug("Fetching gizmos for selected home")
             gizmos = await self.api_client.async_get_gizmos(selected_home_id)
-            gizmo_ids_by_type: Dict[str, List[str]] = defaultdict(list)
+            gizmo_ids_by_type: dict[str, list[str]] = defaultdict(list)
             if isinstance(gizmos, list):
                 for gizmo in gizmos:
                     gizmo_type = gizmo.get("type")
@@ -227,13 +235,18 @@ class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignor
             _LOGGER.debug("Full API error details:", exc_info=True)
             errors["base"] = "cannot_connect_homes"
             return self.async_show_form(
-                step_id="user", data_schema=USER_DATA_SCHEMA, errors=errors,
+                step_id="user",
+                data_schema=USER_DATA_SCHEMA,
+                errors=errors,
             )
         except Exception as e:
             _LOGGER.exception(
-                "Unexpected error during home/gizmo selection: %s", str(e),
+                "Unexpected error during home/gizmo selection: %s",
+                str(e),
             )
             errors["base"] = "unknown_home_select"
             return self.async_show_form(
-                step_id="user", data_schema=USER_DATA_SCHEMA, errors=errors,
+                step_id="user",
+                data_schema=USER_DATA_SCHEMA,
+                errors=errors,
             )

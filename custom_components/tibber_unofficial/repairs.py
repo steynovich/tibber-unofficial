@@ -1,15 +1,16 @@
 """Repair flows for Tibber Unofficial integration."""
 
 import logging
-from typing import Dict, Any, Optional
-import voluptuous as vol
+from typing import Any
 
-from homeassistant.components.repairs import RepairsFlow, ConfirmRepairFlow
+import aiohttp
+from homeassistant.components.repairs import ConfirmRepairFlow, RepairsFlow
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv, issue_registry as ir
+import voluptuous as vol
 
-from .api import TibberApiClient, ApiAuthError
+from .api import ApiAuthError, TibberApiClient
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ _LOGGER = logging.getLogger(__name__)
 async def async_create_fix_flow(
     hass: HomeAssistant,
     issue_id: str,
-    data: Dict[str, Any] | None,
+    data: dict[str, Any] | None,
 ) -> RepairsFlow:
     """Create a repair flow."""
     if issue_id == "auth_failed":
@@ -34,14 +35,18 @@ class AuthFailedRepairFlow(RepairsFlow):
     """Handle authentication failure repair."""
 
     def __init__(
-        self, hass: HomeAssistant, issue_id: str, data: Dict[str, Any] | None,
+        self,
+        hass: HomeAssistant,
+        issue_id: str,
+        data: dict[str, Any] | None,
     ) -> None:
         """Initialize the repair flow."""
         super().__init__(hass, issue_id, data)
         self.entry_id = data.get("entry_id") if data else None
 
     async def async_step_init(
-        self, user_input: Dict[str, Any] | None = None,
+        self,
+        user_input: dict[str, Any] | None = None,
     ) -> FlowResult:
         """Handle the initial step."""
         if user_input is None:
@@ -62,8 +67,6 @@ class AuthFailedRepairFlow(RepairsFlow):
         errors = {}
         try:
             # Test authentication with new credentials
-            import aiohttp
-
             timeout = aiohttp.ClientTimeout(total=30)
             async with aiohttp.ClientSession(timeout=timeout) as session:
                 api_client = TibberApiClient(
@@ -73,7 +76,8 @@ class AuthFailedRepairFlow(RepairsFlow):
                 )
                 await api_client.authenticate()
                 _LOGGER.info(
-                    "Authentication repair successful for %s", user_input["email"],
+                    "Authentication repair successful for %s",
+                    user_input["email"],
                 )
 
         except ApiAuthError:
@@ -117,7 +121,8 @@ class DeprecatedConfigRepairFlow(RepairsFlow):
     """Handle deprecated configuration repair."""
 
     async def async_step_init(
-        self, user_input: Dict[str, Any] | None = None,
+        self,
+        user_input: dict[str, Any] | None = None,
     ) -> FlowResult:
         """Handle the initial step."""
         if user_input is None:
@@ -153,7 +158,8 @@ class RateLimitRepairFlow(RepairsFlow):
     """Handle rate limit exceeded repair."""
 
     async def async_step_init(
-        self, user_input: Dict[str, Any] | None = None,
+        self,
+        user_input: dict[str, Any] | None = None,
     ) -> FlowResult:
         """Handle the initial step."""
         if user_input is None:
@@ -169,7 +175,8 @@ class RateLimitRepairFlow(RepairsFlow):
                 data_schema=vol.Schema(
                     {
                         vol.Required(
-                            "update_interval_minutes", default=recommended_interval,
+                            "update_interval_minutes",
+                            default=recommended_interval,
                         ): vol.All(vol.Coerce(int), vol.Range(min=5, max=1440)),
                     },
                 ),
@@ -202,11 +209,11 @@ async def async_create_issue(
     issue_domain: str,
     is_fixable: bool = True,
     is_persistent: bool = False,
-    learn_more_url: Optional[str] = None,
+    learn_more_url: str | None = None,
     severity: ir.IssueSeverity = ir.IssueSeverity.WARNING,
-    translation_key: Optional[str] = None,
-    translation_placeholders: Optional[Dict[str, str]] = None,
-    data: Optional[Dict[str, Any]] = None,
+    translation_key: str | None = None,
+    translation_placeholders: dict[str, str] | None = None,
+    data: dict[str, Any] | None = None,
 ) -> None:
     """Create a repair issue."""
     ir.async_create_issue(
@@ -224,7 +231,9 @@ async def async_create_issue(
 
 
 async def async_delete_issue(
-    hass: HomeAssistant, issue_id: str, issue_domain: str,
+    hass: HomeAssistant,
+    issue_id: str,
+    issue_domain: str,
 ) -> None:
     """Delete a repair issue."""
     ir.async_delete_issue(hass, issue_domain, issue_id)

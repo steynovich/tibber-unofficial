@@ -1,16 +1,17 @@
 """Tests for sensors."""
 
-import pytest
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
-from datetime import datetime, timezone, timedelta
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+import pytest
+
+from custom_components.tibber_unofficial.const import DOMAIN
 from custom_components.tibber_unofficial.sensor import (
+    SENSOR_DESCRIPTIONS,
     GridRewardsSensor,
     async_setup_entry,
-    SENSOR_DESCRIPTIONS,
 )
-from custom_components.tibber_unofficial.const import DOMAIN
 
 
 @pytest.mark.asyncio
@@ -23,7 +24,7 @@ async def test_sensor_setup(mock_hass, mock_config_entry):
                 "home": {
                     "gridRewards": [
                         {
-                            "rewardDate": datetime.now(timezone.utc).isoformat(),
+                            "rewardDate": datetime.now(UTC).isoformat(),
                             "totalAmount": 10.5,
                             "currency": "EUR",
                             "gizmos": [
@@ -40,7 +41,7 @@ async def test_sensor_setup(mock_hass, mock_config_entry):
                 "home": {
                     "gridRewards": [
                         {
-                            "rewardDate": datetime.now(timezone.utc).isoformat(),
+                            "rewardDate": datetime.now(UTC).isoformat(),
                             "totalAmount": 2.5,
                             "currency": "EUR",
                             "gizmos": [
@@ -86,7 +87,7 @@ def test_sensor_state_current_day():
                 "home": {
                     "gridRewards": [
                         {
-                            "rewardDate": datetime.now(timezone.utc).isoformat(),
+                            "rewardDate": datetime.now(UTC).isoformat(),
                             "totalAmount": 2.5,
                             "currency": "EUR",
                             "gizmos": [
@@ -127,7 +128,7 @@ def test_sensor_state_current_month():
     """Test current month sensor state."""
     coordinator = MagicMock(spec=DataUpdateCoordinator)
 
-    current_time = datetime.now(timezone.utc)
+    current_time = datetime.now(UTC)
     coordinator.data = {
         "monthly": {
             "viewer": {
@@ -175,7 +176,7 @@ def test_sensor_state_previous_month():
     """Test previous month sensor state."""
     coordinator = MagicMock(spec=DataUpdateCoordinator)
 
-    current_time = datetime.now(timezone.utc)
+    current_time = datetime.now(UTC)
     last_month = current_time.replace(day=1) - timedelta(days=1)
 
     coordinator.data = {
@@ -214,7 +215,7 @@ def test_sensor_state_current_year():
     """Test current year sensor state."""
     coordinator = MagicMock(spec=DataUpdateCoordinator)
 
-    current_time = datetime.now(timezone.utc)
+    current_time = datetime.now(UTC)
     coordinator.data = {
         "monthly": {
             "viewer": {
@@ -279,7 +280,7 @@ def test_sensor_attributes():
                 "home": {
                     "gridRewards": [
                         {
-                            "rewardDate": datetime.now(timezone.utc).isoformat(),
+                            "rewardDate": datetime.now(UTC).isoformat(),
                             "totalAmount": 2.5,
                             "currency": "EUR",
                             "gizmos": [

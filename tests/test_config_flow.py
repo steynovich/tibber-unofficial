@@ -1,10 +1,11 @@
 """Tests for the config flow."""
 
-import pytest
 from unittest.mock import AsyncMock, patch
+
 from homeassistant import config_entries
-from homeassistant.const import CONF_USERNAME, CONF_PASSWORD
+from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.data_entry_flow import FlowResultType
+import pytest
 
 from custom_components.tibber_unofficial.const import DOMAIN
 

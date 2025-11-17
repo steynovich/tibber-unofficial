@@ -1,20 +1,21 @@
 """Test suite for Gold standard features in Tibber Unofficial integration."""
 
-import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 import json
+from unittest.mock import AsyncMock, Mock, patch
 
+import pytest
 
+from custom_components.tibber_unofficial import async_setup_entry, async_unload_entry
 from custom_components.tibber_unofficial.diagnostics import (
     async_get_config_entry_diagnostics,
     async_get_device_diagnostics,
 )
 from custom_components.tibber_unofficial.repairs import (
     AuthFailedRepairFlow,
-    RateLimitRepairFlow,
     DeprecatedConfigRepairFlow,
+    RateLimitRepairFlow,
     async_create_issue,
     async_delete_issue,
 )
@@ -22,7 +23,6 @@ from custom_components.tibber_unofficial.services import (
     async_setup_services,
     async_unload_services,
 )
-from custom_components.tibber_unofficial import async_setup_entry, async_unload_entry
 
 
 @pytest.fixture
@@ -76,14 +76,14 @@ class TestDiagnostics:
         mock_rewards_coordinator.last_exception = None
         mock_rewards_coordinator.update_interval = Mock()
         mock_rewards_coordinator.update_interval.__str__ = Mock(return_value="0:15:00")
-        mock_rewards_coordinator.last_update_success_time = datetime.now(timezone.utc)
+        mock_rewards_coordinator.last_update_success_time = datetime.now(UTC)
         mock_rewards_coordinator.data = {"test_key": "test_value"}
         mock_rewards_coordinator.home_id = "12345678-1234-1234-1234-123456789abc"
 
         mock_api_client = Mock()
         mock_api_client._initialized = True
         mock_api_client._token = "test_token"
-        mock_api_client._token_expiry_time = datetime.now(timezone.utc)
+        mock_api_client._token_expiry_time = datetime.now(UTC)
         mock_api_client.get_cache_stats = Mock(
             return_value={"entries": 5, "hits": 10, "misses": 2, "hit_rate": 83.3}
         )
@@ -240,25 +240,27 @@ class TestRepairs:
 
     async def test_create_and_delete_issue(self, mock_hass):
         """Test issue creation and deletion."""
-        with patch(
-            "homeassistant.helpers.issue_registry.async_create_issue"
-        ) as mock_create:
-            with patch(
+        with (
+            patch(
+                "homeassistant.helpers.issue_registry.async_create_issue"
+            ) as mock_create,
+            patch(
                 "homeassistant.helpers.issue_registry.async_delete_issue"
-            ) as mock_delete:
-                # Create issue
-                await async_create_issue(
-                    mock_hass,
-                    "test_issue",
-                    "test_domain",
-                    translation_key="test_key",
-                    data={"test": "data"},
-                )
-                mock_create.assert_called_once()
+            ) as mock_delete,
+        ):
+            # Create issue
+            await async_create_issue(
+                mock_hass,
+                "test_issue",
+                "test_domain",
+                translation_key="test_key",
+                data={"test": "data"},
+            )
+            mock_create.assert_called_once()
 
-                # Delete issue
-                await async_delete_issue(mock_hass, "test_issue", "test_domain")
-                mock_delete.assert_called_once()
+            # Delete issue
+            await async_delete_issue(mock_hass, "test_issue", "test_domain")
+            mock_delete.assert_called_once()
 
 
 class TestServices:
@@ -359,36 +361,38 @@ class TestGoldStandardIntegration:
     ):
         """Test services are properly managed during setup and unload."""
         # Mock the API client initialization
-        with patch(
-            "custom_components.tibber_unofficial.TibberApiClient"
-        ) as mock_api_class:
-            with patch(
+        with (
+            patch(
+                "custom_components.tibber_unofficial.TibberApiClient"
+            ) as mock_api_class,
+            patch(
                 "custom_components.tibber_unofficial.RateLimiterStorage"
-            ) as mock_storage_class:
-                with patch("aiohttp.ClientSession"):
-                    mock_api_instance = AsyncMock()
-                    mock_api_instance.initialize = AsyncMock()
-                    mock_api_class.return_value = mock_api_instance
+            ) as mock_storage_class,
+            patch("aiohttp.ClientSession"),
+        ):
+            mock_api_instance = AsyncMock()
+            mock_api_instance.initialize = AsyncMock()
+            mock_api_class.return_value = mock_api_instance
 
-                    mock_storage_instance = AsyncMock()
-                    mock_storage_class.return_value = mock_storage_instance
+            mock_storage_instance = AsyncMock()
+            mock_storage_class.return_value = mock_storage_instance
 
-                    # Setup entry
-                    result = await async_setup_entry(mock_hass, mock_config_entry)
-                    assert result is True
+            # Setup entry
+            result = await async_setup_entry(mock_hass, mock_config_entry)
+            assert result is True
 
-                    # Verify services were set up
-                    mock_hass.services.async_register.assert_called()
+            # Verify services were set up
+            mock_hass.services.async_register.assert_called()
 
-                    # Mock unload
-                    mock_hass.config_entries = Mock()
-                    mock_hass.config_entries.async_unload_platforms = AsyncMock(
-                        return_value=True
-                    )
+            # Mock unload
+            mock_hass.config_entries = Mock()
+            mock_hass.config_entries.async_unload_platforms = AsyncMock(
+                return_value=True
+            )
 
-                    # Unload entry
-                    result = await async_unload_entry(mock_hass, mock_config_entry)
-                    assert result is True
+            # Unload entry
+            result = await async_unload_entry(mock_hass, mock_config_entry)
+            assert result is True
 
     async def test_repair_issue_creation_on_auth_error(
         self, mock_hass, mock_config_entry
@@ -427,7 +431,7 @@ class TestGoldStandardIntegration:
         # Read strings.json
         strings_path = "/Users/steyn/projects/tibber-unofficial/custom_components/tibber_unofficial/strings.json"
 
-        with open(strings_path, "r") as f:
+        with open(strings_path) as f:
             strings = json.load(f)
 
         # Verify required sections exist
@@ -460,7 +464,7 @@ class TestGoldStandardIntegration:
 
         manifest_path = "/Users/steyn/projects/tibber-unofficial/custom_components/tibber_unofficial/manifest.json"
 
-        with open(manifest_path, "r") as f:
+        with open(manifest_path) as f:
             manifest = json.load(f)
 
         # Verify Gold standard declaration

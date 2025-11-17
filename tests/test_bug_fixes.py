@@ -1,15 +1,16 @@
 """Test suite for bug fixes in Tibber Unofficial integration."""
 
-import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch
-import aiohttp
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
+from unittest.mock import AsyncMock, Mock, patch
 
+import aiohttp
+import pytest
+
+from custom_components.tibber_unofficial import async_unload_entry
 from custom_components.tibber_unofficial.api import TibberApiClient
 from custom_components.tibber_unofficial.cache import SmartCache
 from custom_components.tibber_unofficial.rate_limiter import MultiTierRateLimiter
-from custom_components.tibber_unofficial import async_unload_entry
 
 
 @pytest.fixture
@@ -174,7 +175,7 @@ class TestTimezoneHandling:
         )
 
         # Mock datetime to return a specific time
-        fixed_time = datetime(2024, 3, 15, 10, 30, 0, tzinfo=timezone.utc)
+        fixed_time = datetime(2024, 3, 15, 10, 30, 0, tzinfo=UTC)
 
         with patch("custom_components.tibber_unofficial.api.datetime") as mock_datetime:
             mock_datetime.now.return_value = fixed_time
@@ -184,8 +185,8 @@ class TestTimezoneHandling:
             start_time, end_time = api_client._get_period_bounds("current_month")
 
             # Should be timezone-aware UTC times
-            assert start_time.tzinfo == timezone.utc
-            assert end_time.tzinfo == timezone.utc
+            assert start_time.tzinfo == UTC
+            assert end_time.tzinfo == UTC
 
     def test_timezone_aware_period_bounds(self, mock_storage):
         """Test period bounds are timezone-aware."""
@@ -200,8 +201,8 @@ class TestTimezoneHandling:
             start_time, end_time = api_client._get_period_bounds(period)
             assert start_time.tzinfo is not None
             assert end_time.tzinfo is not None
-            assert start_time.tzinfo == timezone.utc
-            assert end_time.tzinfo == timezone.utc
+            assert start_time.tzinfo == UTC
+            assert end_time.tzinfo == UTC
 
 
 class TestCacheKeyCollision:
@@ -248,7 +249,7 @@ class TestTokenExpiryHandling:
         )
 
         # Set token that expires in 8 minutes (should trigger refresh)
-        future_time = datetime.now(timezone.utc) + timedelta(minutes=8)
+        future_time = datetime.now(UTC) + timedelta(minutes=8)
         api_client._token_expiry = future_time
         api_client._access_token = "test_token"
 
@@ -256,7 +257,7 @@ class TestTokenExpiryHandling:
         assert api_client._is_token_expired() is True
 
         # Set token that expires in 12 minutes (should not trigger refresh)
-        future_time = datetime.now(timezone.utc) + timedelta(minutes=12)
+        future_time = datetime.now(UTC) + timedelta(minutes=12)
         api_client._token_expiry = future_time
 
         # Should indicate token is still valid (12 minutes > 10 minute buffer)
@@ -281,7 +282,7 @@ class TestTokenExpiryHandling:
             )
 
             # Set token that expires soon
-            soon_expiry = datetime.now(timezone.utc) + timedelta(minutes=5)
+            soon_expiry = datetime.now(UTC) + timedelta(minutes=5)
             api_client._token_expiry = soon_expiry
             api_client._access_token = "old_token"
 

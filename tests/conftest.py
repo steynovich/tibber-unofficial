@@ -1,10 +1,11 @@
 """Common test fixtures and configuration."""
 
-import pytest
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock
-from datetime import datetime, timezone
+
+from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
-from homeassistant.const import CONF_USERNAME, CONF_PASSWORD
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 
@@ -53,8 +54,8 @@ def mock_api_client():
         "homevolt": 6.5,
         "total": 10.5,
         "currency": "EUR",
-        "from_date_api": datetime.now(timezone.utc).isoformat(),
-        "to_date_api": datetime.now(timezone.utc).isoformat(),
+        "from_date_api": datetime.now(UTC).isoformat(),
+        "to_date_api": datetime.now(UTC).isoformat(),
     }
     client.async_get_grid_rewards_history = AsyncMock(return_value=mock_rewards)
     client.get_cache_stats = AsyncMock(

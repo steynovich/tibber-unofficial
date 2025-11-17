@@ -1,14 +1,15 @@
 """Tests for data coordinators."""
 
-import pytest
-from unittest.mock import AsyncMock
 from datetime import timedelta
+from unittest.mock import AsyncMock
+
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import UpdateFailed
+import pytest
 
 from custom_components.tibber_unofficial import (
-    GridRewardsCoordinator,
     GizmoUpdateCoordinator,
+    GridRewardsCoordinator,
 )
 
 

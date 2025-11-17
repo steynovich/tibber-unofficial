@@ -3,24 +3,25 @@
 from __future__ import annotations
 
 import asyncio
+from asyncio import sleep
+from datetime import UTC, datetime, timedelta
 import logging
-import aiohttp
 import random
 import re
-from typing import Any, Dict, List
-from datetime import datetime, timedelta, timezone
-from asyncio import sleep
+from typing import Any
 
-from .rate_limiter import MultiTierRateLimiter
+import aiohttp
+
 from .cache import SmartCache
 from .const import (
     API_AUTH_URL,
     API_GRAPHQL_URL,
-    HOMES_QUERY,
     GIZMOS_QUERY_TEMPLATE,
-    GRID_REWARDS_QUERY_TEMPLATE,
     GRID_REWARDS_DAILY_QUERY_TEMPLATE,
+    GRID_REWARDS_QUERY_TEMPLATE,
+    HOMES_QUERY,
 )
+from .rate_limiter import MultiTierRateLimiter
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -96,8 +97,7 @@ class TibberApiClient:
         if (
             self._token
             and self._token_expiry_time
-            and datetime.now(timezone.utc)
-            < self._token_expiry_time - timedelta(minutes=10)
+            and datetime.now(UTC) < self._token_expiry_time - timedelta(minutes=10)
         ):
             _LOGGER.debug(
                 "Using cached token for %s (expires: %s)",
@@ -112,8 +112,7 @@ class TibberApiClient:
             if (
                 self._token
                 and self._token_expiry_time
-                and datetime.now(timezone.utc)
-                < self._token_expiry_time - timedelta(minutes=10)
+                and datetime.now(UTC) < self._token_expiry_time - timedelta(minutes=10)
             ):
                 _LOGGER.debug(
                     "Using token obtained by concurrent request for %s",
@@ -127,7 +126,9 @@ class TibberApiClient:
             )  # Kept info for this key event
             if not self._email or not self._password:
                 _LOGGER.error("Email or password not provided for authentication.")
-                raise ApiAuthError("Email and password are required to fetch a new token.")
+                raise ApiAuthError(
+                    "Email and password are required to fetch a new token."
+                )
 
             # Validate email format
             if not isinstance(self._email, str) or "@" not in self._email:
@@ -148,9 +149,12 @@ class TibberApiClient:
                         self._max_retries,
                     )
                     async with self._session.post(
-                        API_AUTH_URL, headers=headers, json=auth_payload, timeout=10,
+                        API_AUTH_URL,
+                        headers=headers,
+                        json=auth_payload,
+                        timeout=10,
                     ) as response:
-                        if response.status == 400 or response.status == 401:
+                        if response.status in {400, 401}:
                             responseText = await response.text()
                             _LOGGER.error(
                                 "Authentication failed for %s - Status: %s, Response: %s",
@@ -168,11 +172,12 @@ class TibberApiClient:
                         self._token = auth_data.get("token")
                         if not self._token:
                             _LOGGER.error(
-                                "Token not found in authentication response: %s", auth_data,
+                                "Token not found in authentication response: %s",
+                                auth_data,
                             )
                             raise ApiAuthError("Token not received from API.")
 
-                        self._token_expiry_time = datetime.now(timezone.utc) + timedelta(
+                        self._token_expiry_time = datetime.now(UTC) + timedelta(
                             hours=1,
                         )
                         _LOGGER.info(
@@ -185,11 +190,15 @@ class TibberApiClient:
                             self._token[:10] if self._token else "None",
                         )
                         return self._token
-                except (asyncio.TimeoutError, aiohttp.ClientError) as e:
+                except (TimeoutError, aiohttp.ClientError) as e:
                     if attempt < self._max_retries - 1:
                         # Exponential backoff with jitter for auth retries
-                        base_wait = min(self._base_delay * (2**attempt), self._max_delay)
-                        jitter = base_wait * self._jitter_range * (2 * random.random() - 1)
+                        base_wait = min(
+                            self._base_delay * (2**attempt), self._max_delay
+                        )
+                        jitter = (
+                            base_wait * self._jitter_range * (2 * random.random() - 1)
+                        )
                         wait_time = max(0.1, base_wait + jitter)
                         _LOGGER.warning(
                             "Authentication network error: %s. Retrying in %.2f seconds (attempt %s/%s)",
@@ -210,7 +219,9 @@ class TibberApiClient:
                     raise  # Don't retry on auth errors (bad credentials)
                 except Exception as e:
                     _LOGGER.exception("Unexpected error during authentication.")
-                    raise ApiError(f"Unexpected error during authentication: {e}") from e
+                    raise ApiError(
+                        f"Unexpected error during authentication: {e}"
+                    ) from e
 
             # Should not reach here
             raise ApiError("Authentication failed after all retries")
@@ -220,8 +231,10 @@ class TibberApiClient:
         await self._ensure_token()
 
     async def _graphql_request(
-        self, query: str, variables: Dict[str, Any] | None = None,
-    ) -> Dict[str, Any]:
+        self,
+        query: str,
+        variables: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """Make a GraphQL request to the Tibber API with retry logic."""
         # Ensure rate limiter is initialized
         if not self._initialized:
@@ -243,7 +256,7 @@ class TibberApiClient:
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {token}",
                 }
-                payload: Dict[str, Any] = {"query": query}
+                payload: dict[str, Any] = {"query": query}
                 if variables:
                     payload["variables"] = variables
 
@@ -255,7 +268,10 @@ class TibberApiClient:
                 )
 
                 async with self._session.post(
-                    API_GRAPHQL_URL, headers=headers, json=payload, timeout=20,
+                    API_GRAPHQL_URL,
+                    headers=headers,
+                    json=payload,
+                    timeout=20,
                 ) as response:
                     # _LOGGER.debug("GraphQL raw response status: %s", response.status) # Removed
                     _LOGGER.debug("Response status: %s", response.status)
@@ -278,7 +294,10 @@ class TibberApiClient:
                         headers["Authorization"] = f"Bearer {token}"
                         _LOGGER.debug("Retrying request with new token")
                         async with self._session.post(
-                            API_GRAPHQL_URL, headers=headers, json=payload, timeout=20,
+                            API_GRAPHQL_URL,
+                            headers=headers,
+                            json=payload,
+                            timeout=20,
                         ) as retry_response:
                             # _LOGGER.debug("GraphQL retry raw response status: %s", retry_response.status) # Removed
                             if retry_response.status >= 400:
@@ -299,7 +318,8 @@ class TibberApiClient:
                         else:
                             # Exponential backoff with jitter
                             base_wait = min(
-                                self._base_delay * (2**attempt), self._max_delay,
+                                self._base_delay * (2**attempt),
+                                self._max_delay,
                             )
                             jitter = (
                                 base_wait
@@ -321,7 +341,8 @@ class TibberApiClient:
                         if attempt < self._max_retries - 1:
                             # Exponential backoff with jitter and maximum delay
                             base_wait = min(
-                                self._base_delay * (2**attempt), self._max_delay,
+                                self._base_delay * (2**attempt),
+                                self._max_delay,
                             )
                             jitter = (
                                 base_wait
@@ -344,19 +365,20 @@ class TibberApiClient:
                         response.raise_for_status()
                         data = await response.json()
 
-                    if "errors" in data and data["errors"]:
+                    if data.get("errors"):
                         error_msgs = [
                             err.get("message", str(err)) for err in data["errors"]
                         ]
                         _LOGGER.error(
-                            "GraphQL errors returned: %s", ", ".join(error_msgs),
+                            "GraphQL errors returned: %s",
+                            ", ".join(error_msgs),
                         )
                         raise ApiError(f"GraphQL query failed: {', '.join(error_msgs)}")
 
                     _LOGGER.debug("GraphQL request successful")
                     return data.get("data", {})
 
-            except asyncio.TimeoutError as e:
+            except TimeoutError as e:
                 last_exception = e
                 if attempt < self._max_retries - 1:
                     base_wait = min(self._base_delay * (2**attempt), self._max_delay)
@@ -395,9 +417,11 @@ class TibberApiClient:
                     await sleep(wait_time)
                 else:
                     _LOGGER.error(
-                        "Network error after %d retries: %s", self._max_retries, str(e),
+                        "Network error after %d retries: %s",
+                        self._max_retries,
+                        str(e),
                     )
-                    raise ApiError(f"Network connection failed: {str(e)}") from e
+                    raise ApiError(f"Network connection failed: {e!s}") from e
             except ApiError:
                 raise  # Don't retry on API errors (like auth errors)
             except Exception as e:
@@ -415,7 +439,7 @@ class TibberApiClient:
             ) from last_exception
         raise ApiError(f"Failed after {self._max_retries} retries")
 
-    async def async_get_homes(self) -> List[Dict[str, Any]]:
+    async def async_get_homes(self) -> list[dict[str, Any]]:
         """Fetch user's homes using GraphQL."""
         _LOGGER.debug("Fetching homes for user %s", self._email)
 
@@ -456,11 +480,13 @@ class TibberApiClient:
             raise  # Already logged by _graphql_request or _ensure_token
         except Exception as e:
             _LOGGER.exception(
-                "Unexpected error fetching homes for %s: %s", self._email, str(e),
+                "Unexpected error fetching homes for %s: %s",
+                self._email,
+                str(e),
             )
-            raise ApiError(f"Failed to fetch homes: {str(e)}") from e
+            raise ApiError(f"Failed to fetch homes: {e!s}") from e
 
-    async def async_get_gizmos(self, home_id: str) -> List[Dict[str, Any]]:
+    async def async_get_gizmos(self, home_id: str) -> list[dict[str, Any]]:
         """Fetch gizmos for a specific home ID."""
         # Validate home_id
         if not home_id or not isinstance(home_id, str):
@@ -473,7 +499,8 @@ class TibberApiClient:
             raise ApiError("Invalid home_id - Must be a valid UUID")
 
         _LOGGER.debug(
-            "Fetching gizmos for home %s", home_id[:8],
+            "Fetching gizmos for home %s",
+            home_id[:8],
         )  # Log partial ID for privacy
 
         # Check cache first
@@ -485,14 +512,16 @@ class TibberApiClient:
         variables = {"homeId": home_id}
         try:
             response_data_field = await self._graphql_request(
-                query=GIZMOS_QUERY_TEMPLATE, variables=variables,
+                query=GIZMOS_QUERY_TEMPLATE,
+                variables=variables,
             )
             gizmos_list = (
                 response_data_field.get("me", {}).get("home", {}).get("gizmos", [])
             )
             if not isinstance(gizmos_list, list):
                 _LOGGER.error(
-                    "API response for gizmos is not a list for home %s.", home_id,
+                    "API response for gizmos is not a list for home %s.",
+                    home_id,
                 )
                 return []
 
@@ -505,7 +534,9 @@ class TibberApiClient:
                     _LOGGER.warning("Invalid gizmo data structure: %s", gizmo)
 
             _LOGGER.info(
-                "Found %d valid gizmos for home %s", len(valid_gizmos), home_id[:8],
+                "Found %d valid gizmos for home %s",
+                len(valid_gizmos),
+                home_id[:8],
             )
             _LOGGER.debug(
                 "Gizmos: %s",
@@ -525,9 +556,11 @@ class TibberApiClient:
             raise
         except Exception as e:
             _LOGGER.exception(
-                "Unexpected error fetching gizmos for home %s: %s", home_id[:8], str(e),
+                "Unexpected error fetching gizmos for home %s: %s",
+                home_id[:8],
+                str(e),
             )
-            raise ApiError(f"Failed to fetch gizmos: {str(e)}") from e
+            raise ApiError(f"Failed to fetch gizmos: {e!s}") from e
 
     async def async_get_grid_rewards_history(
         self,
@@ -535,7 +568,7 @@ class TibberApiClient:
         from_date_str: str,
         to_date_str: str,
         use_daily_resolution: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Fetch grid rewards history using GraphQL.
 
         Args:
@@ -563,12 +596,12 @@ class TibberApiClient:
             datetime.fromisoformat(from_date_str.replace("Z", "+00:00"))
             datetime.fromisoformat(to_date_str.replace("Z", "+00:00"))
         except (ValueError, AttributeError) as e:
-            raise ApiError(f"Invalid date format: {e}")
+            raise ApiError(f"Invalid date format: {e}") from e
 
         # Determine cache data type based on date range
         cache_type = "rewards_daily" if use_daily_resolution else "rewards_monthly"
         to_dt = datetime.fromisoformat(to_date_str.replace("Z", "+00:00"))
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Check if this is historical data (ended more than 1 day ago)
         if to_dt < now - timedelta(days=1):
@@ -597,7 +630,8 @@ class TibberApiClient:
             else GRID_REWARDS_QUERY_TEMPLATE
         )
         response_data_field = await self._graphql_request(
-            query=query_template, variables=variables,
+            query=query_template,
+            variables=variables,
         )
         default_return = {
             "ev": None,
@@ -647,6 +681,6 @@ class TibberApiClient:
             _LOGGER.exception("Error parsing rewards data for home %s.", home_id)
             return default_return
 
-    def get_cache_stats(self) -> Dict[str, Any]:
+    def get_cache_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         return self._cache.get_stats()

@@ -1,18 +1,15 @@
 """Options flow for Tibber Unofficial."""
 
 import logging
-import voluptuous as vol
-from typing import Any, Dict
+from typing import Any
 
 from homeassistant import config_entries
 from homeassistant.core import callback
-import homeassistant.helpers.config_validation as cv
 from homeassistant.data_entry_flow import FlowResult
+import homeassistant.helpers.config_validation as cv
+import voluptuous as vol
 
-from .const import (
-    DEFAULT_REWARDS_SCAN_INTERVAL,
-    DEFAULT_GIZMO_SCAN_INTERVAL,
-)
+from .const import DEFAULT_GIZMO_SCAN_INTERVAL, DEFAULT_REWARDS_SCAN_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -33,7 +30,8 @@ class TibberOptionsFlow(config_entries.OptionsFlow):
         self.config_entry = config_entry
 
     async def async_step_init(
-        self, user_input: Dict[str, Any] | None = None,
+        self,
+        user_input: dict[str, Any] | None = None,
     ) -> FlowResult:
         """Manage the options."""
         if user_input is not None:

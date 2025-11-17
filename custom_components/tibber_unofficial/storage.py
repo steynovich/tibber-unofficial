@@ -1,7 +1,8 @@
 """Storage module for persistent data like rate limiter state."""
 
 import logging
-from typing import Dict, Any
+from typing import Any
+
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
@@ -20,11 +21,13 @@ class RateLimiterStorage:
         self._hass = hass
         self._entry_id = entry_id
         self._store = Store(
-            hass, STORAGE_VERSION, f"{STORAGE_KEY_PREFIX}.{entry_id}.rate_limiter",
+            hass,
+            STORAGE_VERSION,
+            f"{STORAGE_KEY_PREFIX}.{entry_id}.rate_limiter",
         )
-        self._data: Dict[str, Any] = {}
+        self._data: dict[str, Any] = {}
 
-    async def async_load(self) -> Dict[str, Any]:
+    async def async_load(self) -> dict[str, Any]:
         """Load stored rate limiter state."""
         try:
             data = await self._store.async_load()
@@ -57,7 +60,7 @@ class RateLimiterStorage:
         except Exception as e:
             _LOGGER.error("Failed to save rate limiter state: %s", e)
 
-    def _get_default_data(self) -> Dict[str, Any]:
+    def _get_default_data(self) -> dict[str, Any]:
         """Get default data structure."""
         return {
             "hourly_tokens": 80.0,  # Full capacity

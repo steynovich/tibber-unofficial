@@ -2,43 +2,43 @@
 
 from __future__ import annotations
 
-import logging
-from typing import Any, Dict
 from datetime import datetime
+import logging
+from typing import Any
 
 from homeassistant.components.sensor import (
-    SensorEntity,
     SensorDeviceClass,
+    SensorEntity,
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
-from homeassistant.helpers.device_registry import DeviceInfo
 
+from . import GridRewardsCoordinator
 from .const import (
-    DOMAIN,
-    ATTR_LAST_UPDATED,
     ATTR_DATA_PERIOD_FROM,
     ATTR_DATA_PERIOD_TO,
-    GRID_REWARDS_EV_CURRENT_MONTH,
-    GRID_REWARDS_HOMEVOLT_CURRENT_MONTH,
-    GRID_REWARDS_TOTAL_CURRENT_MONTH,
-    GRID_REWARDS_EV_PREVIOUS_MONTH,
-    GRID_REWARDS_HOMEVOLT_PREVIOUS_MONTH,
-    GRID_REWARDS_TOTAL_PREVIOUS_MONTH,
-    GRID_REWARDS_EV_YEAR,
-    GRID_REWARDS_HOMEVOLT_YEAR,
-    GRID_REWARDS_TOTAL_YEAR,
-    GRID_REWARDS_EV_CURRENT_DAY,
-    GRID_REWARDS_HOMEVOLT_CURRENT_DAY,
-    GRID_REWARDS_TOTAL_CURRENT_DAY,
-    KEY_CURRENCY,
+    ATTR_LAST_UPDATED,
     COORDINATOR_REWARDS,
+    DOMAIN,
+    GRID_REWARDS_EV_CURRENT_DAY,
+    GRID_REWARDS_EV_CURRENT_MONTH,
+    GRID_REWARDS_EV_PREVIOUS_MONTH,
+    GRID_REWARDS_EV_YEAR,
+    GRID_REWARDS_HOMEVOLT_CURRENT_DAY,
+    GRID_REWARDS_HOMEVOLT_CURRENT_MONTH,
+    GRID_REWARDS_HOMEVOLT_PREVIOUS_MONTH,
+    GRID_REWARDS_HOMEVOLT_YEAR,
+    GRID_REWARDS_TOTAL_CURRENT_DAY,
+    GRID_REWARDS_TOTAL_CURRENT_MONTH,
+    GRID_REWARDS_TOTAL_PREVIOUS_MONTH,
+    GRID_REWARDS_TOTAL_YEAR,
+    KEY_CURRENCY,
 )
-from . import GridRewardsCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -125,7 +125,9 @@ SENSOR_DEFINITIONS = [
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback,
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the sensor platform from a config entry."""
     rewards_coordinator: GridRewardsCoordinator = hass.data[DOMAIN][entry.entry_id][
@@ -187,7 +189,8 @@ async def async_setup_entry(
 
 
 class GridRewardComponentSensor(
-    CoordinatorEntity[GridRewardsCoordinator], SensorEntity,
+    CoordinatorEntity[GridRewardsCoordinator],
+    SensorEntity,
 ):
     """Representation of a Tibber Unofficial Grid Reward component sensor."""
 
@@ -269,7 +272,7 @@ class GridRewardComponentSensor(
         return None
 
     @property
-    def extra_state_attributes(self) -> Dict[str, Any]:
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Return the state attributes."""
         attrs = {}
         if self.coordinator.data:
