@@ -100,15 +100,19 @@ class TestDiagnostics:
 
         # Mock entity and device registries
         mock_entity_registry = Mock()
-        mock_entity_registry.async_entries_for_config_entry = Mock(return_value=[])
         mock_hass.helpers.entity_registry.async_get = Mock(
             return_value=mock_entity_registry
         )
+        mock_hass.helpers.entity_registry.async_entries_for_config_entry = Mock(
+            return_value=[]
+        )
 
         mock_device_registry = Mock()
-        mock_device_registry.async_entries_for_config_entry = Mock(return_value=[])
         mock_hass.helpers.device_registry.async_get = Mock(
             return_value=mock_device_registry
+        )
+        mock_hass.helpers.device_registry.async_entries_for_config_entry = Mock(
+            return_value=[]
         )
 
         # Get diagnostics

@@ -46,7 +46,9 @@ async def test_grid_rewards_coordinator_update_success(mock_hass, mock_config_en
         return_value={"total_requests": 100, "hit_rate": 75.0}
     )
 
-    coordinator = GridRewardsCoordinator(mock_hass, mock_api, mock_config_entry)
+    coordinator = GridRewardsCoordinator(
+        mock_hass, mock_api, mock_config_entry.data["home_id"]
+    )
 
     data = await coordinator._async_update_data()
 
@@ -71,7 +73,9 @@ async def test_grid_rewards_coordinator_auth_failed(mock_hass, mock_config_entry
         return_value={"total_requests": 0, "hit_rate": 0.0}
     )
 
-    coordinator = GridRewardsCoordinator(mock_hass, mock_api, mock_config_entry)
+    coordinator = GridRewardsCoordinator(
+        mock_hass, mock_api, mock_config_entry.data["home_id"]
+    )
 
     with pytest.raises(ConfigEntryAuthFailed):
         await coordinator._async_update_data()
@@ -90,7 +94,9 @@ async def test_grid_rewards_coordinator_update_failed(mock_hass, mock_config_ent
         return_value={"total_requests": 0, "hit_rate": 0.0}
     )
 
-    coordinator = GridRewardsCoordinator(mock_hass, mock_api, mock_config_entry)
+    coordinator = GridRewardsCoordinator(
+        mock_hass, mock_api, mock_config_entry.data["home_id"]
+    )
 
     with pytest.raises(UpdateFailed):
         await coordinator._async_update_data()
@@ -122,7 +128,9 @@ async def test_grid_rewards_coordinator_partial_failure(mock_hass, mock_config_e
         return_value={"total_requests": 0, "hit_rate": 0.0}
     )
 
-    coordinator = GridRewardsCoordinator(mock_hass, mock_api, mock_config_entry)
+    coordinator = GridRewardsCoordinator(
+        mock_hass, mock_api, mock_config_entry.data["home_id"]
+    )
 
     # The coordinator should handle the partial failure gracefully
     data = await coordinator._async_update_data()
@@ -144,7 +152,9 @@ async def test_gizmo_coordinator_update_success(mock_hass, mock_config_entry):
         ]
     )
 
-    coordinator = GizmoUpdateCoordinator(mock_hass, mock_api, mock_config_entry)
+    coordinator = GizmoUpdateCoordinator(
+        mock_hass, mock_api, mock_config_entry.data["home_id"], {}
+    )
 
     data = await coordinator._async_update_data()
 
@@ -165,7 +175,9 @@ async def test_gizmo_coordinator_auth_failed(mock_hass, mock_config_entry):
         side_effect=ApiAuthError("Authentication failed: 401")
     )
 
-    coordinator = GizmoUpdateCoordinator(mock_hass, mock_api, mock_config_entry)
+    coordinator = GizmoUpdateCoordinator(
+        mock_hass, mock_api, mock_config_entry.data["home_id"], {}
+    )
 
     with pytest.raises(ConfigEntryAuthFailed):
         await coordinator._async_update_data()
@@ -179,7 +191,9 @@ async def test_gizmo_coordinator_update_failed(mock_hass, mock_config_entry):
     mock_api = AsyncMock()
     mock_api.async_get_gizmos = AsyncMock(side_effect=ApiError("Network error"))
 
-    coordinator = GizmoUpdateCoordinator(mock_hass, mock_api, mock_config_entry)
+    coordinator = GizmoUpdateCoordinator(
+        mock_hass, mock_api, mock_config_entry.data["home_id"], {}
+    )
 
     with pytest.raises(UpdateFailed):
         await coordinator._async_update_data()
@@ -190,9 +204,13 @@ async def test_coordinator_update_intervals(mock_hass, mock_config_entry):
     """Test that coordinators have correct update intervals."""
     mock_api = AsyncMock()
 
-    grid_coordinator = GridRewardsCoordinator(mock_hass, mock_api, mock_config_entry)
+    grid_coordinator = GridRewardsCoordinator(
+        mock_hass, mock_api, mock_config_entry.data["home_id"]
+    )
 
-    gizmo_coordinator = GizmoUpdateCoordinator(mock_hass, mock_api, mock_config_entry)
+    gizmo_coordinator = GizmoUpdateCoordinator(
+        mock_hass, mock_api, mock_config_entry.data["home_id"], {}
+    )
 
     # Check update intervals
     assert grid_coordinator.update_interval == timedelta(minutes=15)

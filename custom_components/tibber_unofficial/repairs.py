@@ -120,6 +120,15 @@ class AuthFailedRepairFlow(RepairsFlow):
 class DeprecatedConfigRepairFlow(RepairsFlow):
     """Handle deprecated configuration repair."""
 
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        issue_id: str,
+        data: dict[str, Any] | None,
+    ) -> None:
+        """Initialize the repair flow."""
+        super().__init__(hass, issue_id, data)
+
     async def async_step_init(
         self,
         user_input: dict[str, Any] | None = None,
@@ -156,6 +165,15 @@ class DeprecatedConfigRepairFlow(RepairsFlow):
 
 class RateLimitRepairFlow(RepairsFlow):
     """Handle rate limit exceeded repair."""
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        issue_id: str,
+        data: dict[str, Any] | None,
+    ) -> None:
+        """Initialize the repair flow."""
+        super().__init__(hass, issue_id, data)
 
     async def async_step_init(
         self,
