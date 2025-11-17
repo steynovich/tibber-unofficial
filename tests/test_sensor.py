@@ -106,9 +106,7 @@ def test_sensor_state_current_day():
     mock_config.data = {"home_name": "Test Home"}
 
     # Test Homevolt sensor
-    sensor_desc = next(
-        s for s in SENSOR_DEFINITIONS if s.key == "current_day_homevolt"
-    )
+    sensor_desc = next(s for s in SENSOR_DEFINITIONS if s.key == "current_day_homevolt")
     sensor = GridRewardsSensor(coordinator, mock_config, sensor_desc)
     assert sensor.native_value == 1.5
     assert sensor.native_unit_of_measurement == "EUR"
@@ -204,9 +202,7 @@ def test_sensor_state_previous_month():
     mock_config.data = {"home_name": "Test Home"}
 
     # Test previous month total
-    sensor_desc = next(
-        s for s in SENSOR_DEFINITIONS if s.key == "previous_month_total"
-    )
+    sensor_desc = next(s for s in SENSOR_DEFINITIONS if s.key == "previous_month_total")
     sensor = GridRewardsSensor(coordinator, mock_config, sensor_desc)
     assert sensor.native_value == 45.0
 
