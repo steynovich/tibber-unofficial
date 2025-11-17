@@ -1,0 +1,103 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  validate:
+    name: Validate Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate manifest version matches tag
+        run: |
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          MANIFEST_VERSION=$(grep -Po '"version": "\K[^"]*' custom_components/tibber_unofficial/manifest.json)
+          echo "Tag version: v$TAG_VERSION"
+          echo "Manifest version: $MANIFEST_VERSION"
+          if [ "$TAG_VERSION" != "$MANIFEST_VERSION" ]; then
+            echo "Error: Tag version (v$TAG_VERSION) does not match manifest version ($MANIFEST_VERSION)"
+            exit 1
+          fi
+
+      - name: HACS Validation
+        uses: hacs/action@main
+        with:
+          category: integration
+          ignore: brands
+
+      - name: Hassfest Validation
+        uses: home-assistant/actions/hassfest@master
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: validate
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create release archive
+        run: |
+          cd custom_components
+          zip -r ../tibber-unofficial-${{ steps.version.outputs.version }}.zip tibber_unofficial/
+          cd ..
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get previous tag
+          PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -v "^${GITHUB_REF#refs/tags/}$" | head -n 1)
+
+          if [ -z "$PREVIOUS_TAG" ]; then
+            echo "changelog=Initial release" >> $GITHUB_OUTPUT
+          else
+            echo "changelog<<EOF" >> $GITHUB_OUTPUT
+            git log --pretty=format:"- %s" $PREVIOUS_TAG..HEAD | grep -v "^- Merge" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: "v${{ steps.version.outputs.version }}"
+          body: |
+            ## Changes
+
+            ${{ steps.changelog.outputs.changelog }}
+
+            ## Installation
+
+            ### Via HACS (Recommended)
+            1. Go to HACS → Integrations
+            2. Click the three dots in the top right
+            3. Select "Custom repositories"
+            4. Add `steynovich/tibber-unofficial` as an Integration
+            5. Click Install
+            6. Restart Home Assistant
+
+            ### Manual Installation
+            1. Download `tibber-unofficial-${{ steps.version.outputs.version }}.zip`
+            2. Extract to your Home Assistant `custom_components` directory
+            3. Restart Home Assistant
+
+            ### Configuration
+            1. Go to Settings → Devices & Services
+            2. Click "+ Add Integration"
+            3. Search for "Tibber Unofficial"
+            4. Enter your Tibber credentials
+          files: |
+            tibber-unofficial-${{ steps.version.outputs.version }}.zip
+          draft: false
+          prerelease: false
