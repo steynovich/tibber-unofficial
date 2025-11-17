@@ -353,6 +353,7 @@ class TestServices:
         mock_cache.invalidate.assert_called_once()
 
 
+@pytest.mark.gold_standard
 class TestGoldStandardIntegration:
     """Test Gold standard integration features."""
 

@@ -85,6 +85,10 @@ addopts = [
 ]
 markers = [
     "asyncio: mark test as an asyncio test",
+    "unit: mark test as a unit test",
+    "integration: mark test as an integration test",
+    "gold_standard: mark test as validating Gold standard requirements",
+    "slow: mark test as slow running",
 ]
 
 [tool.mypy]
