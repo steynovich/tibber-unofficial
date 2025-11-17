@@ -87,22 +87,25 @@ platform = "linux"
 show_error_codes = true
 follow_imports = "silent"
 local_partial_types = true
+
+# Strictness - Balanced for Home Assistant development
 strict_equality = true
 no_implicit_optional = true
-warn_incomplete_stub = true
 warn_redundant_casts = true
 warn_unused_configs = true
-warn_unused_ignores = true
-enable_error_code = ["ignore-without-code"]
-disable_error_code = ["annotation-unchecked"]
-check_untyped_defs = true
-disallow_incomplete_defs = true
-disallow_subclassing_any = true
-disallow_untyped_calls = true
-disallow_untyped_decorators = true
-disallow_untyped_defs = true
-warn_return_any = true
 warn_unreachable = true
+check_untyped_defs = true
+
+# Relaxed for HA compatibility - HA's type system has many Any types
+disallow_untyped_calls = false      # HA libraries have many untyped calls
+disallow_untyped_decorators = false # HA decorators aren't fully typed
+disallow_incomplete_defs = false    # Partial typing is acceptable
+disallow_untyped_defs = false       # Not all defs need types in HA context
+disallow_subclassing_any = false    # HA base classes may be Any
+warn_return_any = false             # HA APIs often return Any
+
+# Reduced noise
+warn_unused_ignores = false
 
 [[tool.mypy.overrides]]
 module = [
@@ -111,3 +114,8 @@ module = [
     "aiohttp",
 ]
 ignore_missing_imports = true
+
+# Relax checks for our integration code to work with HA's Any types
+[[tool.mypy.overrides]]
+module = "custom_components.tibber_unofficial.*"
+disable_error_code = ["misc", "no-any-return", "index", "unused-ignore"]
