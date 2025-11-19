@@ -81,10 +81,15 @@ def test_cache_invalidation():
     cache.invalidate("method1", key="a")
     assert cache.get("method1", key="a") is None
     assert cache.get("method1", key="b") == {"data": 2}
+    assert cache.get("method2", key="c") == {"data": 3}  # Should not be affected
 
-    # Clear all
-    cache.invalidate()
+    # Invalidate all entries for method1 (without kwargs)
+    cache.invalidate("method1")
     assert cache.get("method1", key="b") is None
+    assert cache.get("method2", key="c") == {"data": 3}  # Should still exist!
+
+    # Clear all cache
+    cache.invalidate()
     assert cache.get("method2", key="c") is None
 
 
@@ -150,6 +155,7 @@ def test_smart_cache_ttl_selection():
     gizmos_key = cache._make_key("get_gizmos", home="123")
     rewards_key = cache._make_key("get_rewards", date="2024-01-01")
 
+    # Cache entries are now 4-tuples: (data, expiry_time, cached_at, method)
     homes_expiry = entries[homes_key][1]
     gizmos_expiry = entries[gizmos_key][1]
     rewards_expiry = entries[rewards_key][1]
@@ -172,7 +178,7 @@ def test_smart_cache_adaptive_ttl(mock_datetime):
 
     # Check TTL is shortened
     key = list(cache._cache.keys())[0]
-    _, expiry, cached_at = cache._cache[key]
+    _, expiry, cached_at, _ = cache._cache[key]
     ttl = expiry - cached_at
 
     assert ttl == 60  # Should be 1 minute near midnight

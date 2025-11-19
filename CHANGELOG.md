@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2025.11.1] - 2025-11-19 - Bug Fix Release 🐛
+
+### 🐛 Critical Bug Fixes
+- **Fixed missing api_client in hass.data** - `__init__.py:146`
+  - Added `api_client` to hass.data storage during setup
+  - Fixes `tibber_unofficial.refresh_rewards` service failing with KeyError
+  - Service can now properly access API client for cache invalidation
+- **Fixed cache invalidation clearing entire cache** - `cache.py:115-126`
+  - Changed cache storage from 3-tuple to 4-tuple: `(data, expiry_time, cached_at, method)`
+  - Updated `invalidate()` method to filter by method name instead of clearing all entries
+  - Calling `invalidate("method_a")` now only clears `method_a` entries, not the entire cache
+  - Prevents unintended cache misses for unrelated methods
+
+### ⚠️ Moderate Bug Fixes
+- **Removed hardcoded entity IDs** - `sensor.py:217-220`
+  - Deleted manual `entity_id` assignment in GridRewardsSensor
+  - Home Assistant now auto-generates entity IDs based on `unique_id`
+  - Follows Home Assistant best practices and prevents potential entity conflicts
+- **Added string length validation** - `config_flow.py:173-175`
+  - Added defensive checks before string slicing operations on home IDs
+  - Prevents potential IndexError if home IDs are unexpectedly short
+  - More robust error handling during config flow
+
+### 💡 Performance Optimizations
+- **Optimized repeated dictionary lookups** - `sensor.py:251-277`
+  - Cached `self.coordinator.data` in local variables across 3 sensor properties
+  - Reduced redundant property access overhead in:
+    - `native_value()` property
+    - `native_unit_of_measurement()` property
+    - `extra_state_attributes()` property
+  - Minor performance improvement for entity state updates
+
+### 🧪 Test Updates
+- **Updated cache tests** - `tests/test_cache.py`
+  - Updated `test_cache_invalidation()` to verify method-specific invalidation
+  - Fixed tuple unpacking to handle new 4-tuple cache structure
+  - Added assertions to ensure invalidating one method doesn't affect others
+
 ## [2025.11.0] - 2025-11-18 - Performance & Quality Release 🚀
 
 ### ⚡ Performance Optimizations

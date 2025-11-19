@@ -51,7 +51,7 @@ class ApiCache:
         key = self._make_key(method, **kwargs)
 
         if key in self._cache:
-            data, expiry_time, cached_at = self._cache[key]
+            data, expiry_time, cached_at, _ = self._cache[key]
             current_time = time.time()
 
             if current_time < expiry_time:
@@ -89,7 +89,7 @@ class ApiCache:
         current_time = time.time()
         expiry_time = current_time + ttl
 
-        self._cache[key] = (data, expiry_time, current_time)
+        self._cache[key] = (data, expiry_time, current_time, method)
         _LOGGER.debug("Cached %s for %d seconds", method, ttl)
 
     def invalidate(self, method: str | None = None, **kwargs: Any) -> None:
@@ -111,19 +111,26 @@ class ApiCache:
                 del self._cache[key]
                 _LOGGER.debug("Invalidated cache for %s with specific args", method)
         else:
-            # Clear all entries for a method - delete while iterating safely
-            for key in list(self._cache.keys()):
+            # Clear all entries for a method - filter by method name
+            keys_to_delete = [
+                key
+                for key, (_, _, _, cached_method) in self._cache.items()
+                if cached_method == method
+            ]
+            for key in keys_to_delete:
                 del self._cache[key]
 
-            if self._cache:
-                _LOGGER.debug("Invalidated cache entries for %s", method)
+            if keys_to_delete:
+                _LOGGER.debug(
+                    "Invalidated %d cache entries for %s", len(keys_to_delete), method
+                )
 
     def cleanup(self) -> None:
         """Remove expired entries from cache."""
         current_time = time.time()
         expired_keys = []
 
-        for key, (_, expiry_time, _) in self._cache.items():
+        for key, (_, expiry_time, _, _) in self._cache.items():
             if current_time >= expiry_time:
                 expired_keys.append(key)
 

@@ -143,6 +143,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data[DOMAIN][entry.entry_id] = {
         COORDINATOR_REWARDS: rewards_coordinator,
         COORDINATOR_GIZMOS: gizmo_coordinator,
+        "api_client": api_client,
         "session": session,
     }
 

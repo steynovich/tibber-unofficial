@@ -170,10 +170,14 @@ class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignor
                 )
                 return self.async_abort(reason="home_id_missing")
 
-            selected_home_display_name = f"Home ({selected_home_id[-6:]})"
+            # Defensive string slicing with length validation
+            home_id_suffix = selected_home_id[-6:] if len(selected_home_id) >= 6 else selected_home_id
+            home_id_prefix = selected_home_id[:8] if len(selected_home_id) >= 8 else selected_home_id
+
+            selected_home_display_name = f"Home ({home_id_suffix})"
             _LOGGER.info(
                 "Selected home %s for %s",
-                selected_home_id[:8],
+                home_id_prefix,
                 self.user_auth_data.get(CONF_EMAIL),
             )
             _LOGGER.debug(

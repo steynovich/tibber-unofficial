@@ -214,11 +214,6 @@ class GridRewardComponentSensor(
         """Initialize the sensor."""
         super().__init__(coordinator)
 
-        object_id_suffix = data_key.replace("-", "_").replace(" ", "_").lower()
-        if object_id_suffix.startswith("grid_rewards_"):
-            object_id_suffix = object_id_suffix[len("grid_rewards_") :]
-        self.entity_id = f"sensor.{DOMAIN}_{object_id_suffix}"
-
         self._config_entry_id = config_entry_id
         self._data_key = data_key
         self._period_from_key = period_from_key
@@ -253,8 +248,9 @@ class GridRewardComponentSensor(
     @property
     def native_value(self) -> float | None:
         """Return the state of the sensor."""
-        if self.coordinator.data:
-            value = self.coordinator.data.get(self._data_key)
+        data = self.coordinator.data
+        if data:
+            value = data.get(self._data_key)
             if isinstance(value, (int, float)):
                 return round(value, 2)
             # For current day sensors, return 0.0 when value is None (no rewards accumulated yet)
@@ -265,8 +261,9 @@ class GridRewardComponentSensor(
     @property
     def native_unit_of_measurement(self) -> str | None:
         """Return the unit of measurement."""
-        if self.coordinator.data:
-            currency = self.coordinator.data.get(KEY_CURRENCY)
+        data = self.coordinator.data
+        if data:
+            currency = data.get(KEY_CURRENCY)
             if currency and currency != "N/A":
                 return currency
         return None
@@ -275,11 +272,10 @@ class GridRewardComponentSensor(
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return the state attributes."""
         attrs = {}
-        if self.coordinator.data:
-            attrs[ATTR_DATA_PERIOD_FROM] = self.coordinator.data.get(
-                self._period_from_key,
-            )
-            attrs[ATTR_DATA_PERIOD_TO] = self.coordinator.data.get(self._period_to_key)
+        data = self.coordinator.data
+        if data:
+            attrs[ATTR_DATA_PERIOD_FROM] = data.get(self._period_from_key)
+            attrs[ATTR_DATA_PERIOD_TO] = data.get(self._period_to_key)
             attrs[ATTR_LAST_UPDATED] = dt_util.as_utc(datetime.now()).isoformat()
         return attrs
 
