@@ -1,0 +1,46 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Koble til Tibber (Uoffisiell)",
+        "description": "Vennligst oppgi dine Tibber-påloggingsdetaljer.",
+        "data": {
+          "email": "E-post",
+          "password": "Passord"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Kan ikke koble til Tibber. Vennligst sjekk nettverket og påloggingsdetaljene dine.",
+      "invalid_auth": "Ugyldig e-post eller passord.",
+      "invalid_input": "Ugyldig inndataformat. Vennligst sjekk e-post og passord.",
+      "unknown": "En ukjent feil oppstod under oppsettet. Vennligst sjekk loggene.",
+      "cannot_connect_homes": "Kunne ikke hente Tibber-hjemmene dine. Vennligst prøv igjen eller sjekk loggene.",
+      "unknown_home_select": "En ukjent feil oppstod ved valg av Tibber-hjemmet ditt. Vennligst sjekk loggene.",
+      "api_client_not_initialized": "API-klient ikke initialisert. Vennligst start oppsettsprosessen på nytt."
+    },
+    "abort": {
+      "already_configured": "Denne Tibber-kontoen og hjemmet er allerede konfigurert.",
+      "no_homes_found": "Ingen hjem funnet for denne Tibber-kontoen.",
+      "no_active_deal": "Ingen hjem med aktiv energiavtale ble funnet. Vennligst sørg for at du har en aktiv avtale med Tibber.",
+      "home_id_missing": "Kunne ikke hente en gyldig hjem-ID fra API-et for det valgte hjemmet.",
+      "auth_failed_homes": "Autentisering mislyktes ved henting av Tibber-hjemmene dine. Vennligst sjekk påloggingsdetaljene og prøv igjen.",
+      "api_client_not_initialized": "Intern feil: API-klienten var ikke klar. Vennligst prøv å starte oppsettsprosessen på nytt."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Tibber Uoffisielle alternativer",
+        "description": "Konfigurer oppdateringsintervaller for datahenting.\n\nMinimumsverdier: Rewards {rewards_min} minutter, Gizmos {gizmo_min} timer",
+        "data": {
+          "rewards_scan_interval": "Oppdateringsintervall for rewards (minutter)",
+          "gizmo_scan_interval": "Intervall for enhetsoppdagelse (timer)"
+        }
+      }
+    },
+    "error": {
+      "invalid_interval": "Ugyldig intervallverdi"
+    }
+  }
+}

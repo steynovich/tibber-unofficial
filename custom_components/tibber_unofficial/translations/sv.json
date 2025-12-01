@@ -1,0 +1,46 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Anslut till Tibber (Inofficiell)",
+        "description": "Ange dina Tibber-inloggningsuppgifter.",
+        "data": {
+          "email": "E-post",
+          "password": "Lösenord"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Kan inte ansluta till Tibber. Kontrollera ditt nätverk och dina inloggningsuppgifter.",
+      "invalid_auth": "Ogiltig e-post eller lösenord.",
+      "invalid_input": "Ogiltigt inmatningsformat. Kontrollera din e-post och ditt lösenord.",
+      "unknown": "Ett okänt fel uppstod under installationen. Kontrollera loggarna.",
+      "cannot_connect_homes": "Kunde inte hämta dina Tibber-hem. Försök igen eller kontrollera loggarna.",
+      "unknown_home_select": "Ett okänt fel uppstod vid val av ditt Tibber-hem. Kontrollera loggarna.",
+      "api_client_not_initialized": "API-klienten är inte initialiserad. Starta om installationsprocessen."
+    },
+    "abort": {
+      "already_configured": "Detta Tibber-konto och hem är redan konfigurerat.",
+      "no_homes_found": "Inga hem hittades för detta Tibber-konto.",
+      "no_active_deal": "Inget hem med ett aktivt energiavtal hittades. Se till att du har ett aktivt avtal med Tibber.",
+      "home_id_missing": "Kunde inte hämta ett giltigt hem-ID från API:et för det valda hemmet.",
+      "auth_failed_homes": "Autentiseringen misslyckades vid hämtning av dina Tibber-hem. Kontrollera dina inloggningsuppgifter och försök igen.",
+      "api_client_not_initialized": "Internt fel: API-klienten var inte redo. Försök starta om installationsprocessen."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Tibber Inofficiella alternativ",
+        "description": "Konfigurera uppdateringsintervall för datahämtning.\n\nMinimivärden: Rewards {rewards_min} minuter, Gizmos {gizmo_min} timmar",
+        "data": {
+          "rewards_scan_interval": "Uppdateringsintervall för rewards (minuter)",
+          "gizmo_scan_interval": "Intervall för enhetsupptäckt (timmar)"
+        }
+      }
+    },
+    "error": {
+      "invalid_interval": "Ogiltigt intervallvärde"
+    }
+  }
+}

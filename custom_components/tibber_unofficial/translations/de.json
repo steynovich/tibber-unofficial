@@ -1,0 +1,46 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mit Tibber verbinden (Inoffiziell)",
+        "description": "Bitte geben Sie Ihre Tibber-Anmeldedaten ein.",
+        "data": {
+          "email": "E-Mail",
+          "password": "Passwort"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung zu Tibber nicht möglich. Bitte überprüfen Sie Ihr Netzwerk und Ihre Anmeldedaten.",
+      "invalid_auth": "Ungültige E-Mail oder Passwort.",
+      "invalid_input": "Ungültiges Eingabeformat. Bitte überprüfen Sie Ihre E-Mail und Ihr Passwort.",
+      "unknown": "Ein unbekannter Fehler ist während der Einrichtung aufgetreten. Bitte überprüfen Sie die Logs.",
+      "cannot_connect_homes": "Ihre Tibber-Häuser konnten nicht abgerufen werden. Bitte versuchen Sie es erneut oder überprüfen Sie die Logs.",
+      "unknown_home_select": "Ein unbekannter Fehler ist bei der Auswahl Ihres Tibber-Hauses aufgetreten. Bitte überprüfen Sie die Logs.",
+      "api_client_not_initialized": "API-Client nicht initialisiert. Bitte starten Sie den Einrichtungsvorgang neu."
+    },
+    "abort": {
+      "already_configured": "Dieses Tibber-Konto und -Haus sind bereits konfiguriert.",
+      "no_homes_found": "Keine Häuser für dieses Tibber-Konto gefunden.",
+      "no_active_deal": "Kein Haus mit aktivem Energievertrag gefunden. Bitte stellen Sie sicher, dass Sie einen aktiven Vertrag mit Tibber haben.",
+      "home_id_missing": "Konnte keine gültige Haus-ID von der API für das ausgewählte Haus abrufen.",
+      "auth_failed_homes": "Authentifizierung beim Abrufen Ihrer Tibber-Häuser fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten und versuchen Sie es erneut.",
+      "api_client_not_initialized": "Interner Fehler: API-Client war nicht bereit. Bitte versuchen Sie, den Einrichtungsvorgang neu zu starten."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Tibber Inoffizielle Optionen",
+        "description": "Konfigurieren Sie die Aktualisierungsintervalle für den Datenabruf.\n\nMindestwerte: Rewards {rewards_min} Minuten, Gizmos {gizmo_min} Stunden",
+        "data": {
+          "rewards_scan_interval": "Rewards-Aktualisierungsintervall (Minuten)",
+          "gizmo_scan_interval": "Geräteerkennungsintervall (Stunden)"
+        }
+      }
+    },
+    "error": {
+      "invalid_interval": "Ungültiger Intervallwert"
+    }
+  }
+}

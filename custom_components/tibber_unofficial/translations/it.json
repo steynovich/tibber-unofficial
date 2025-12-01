@@ -1,0 +1,46 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connetti a Tibber (Non ufficiale)",
+        "description": "Inserisci le tue credenziali Tibber.",
+        "data": {
+          "email": "Email",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossibile connettersi a Tibber. Controlla la rete e le credenziali.",
+      "invalid_auth": "Email o password non validi.",
+      "invalid_input": "Formato di input non valido. Controlla email e password.",
+      "unknown": "Si è verificato un errore sconosciuto durante la configurazione. Controlla i log.",
+      "cannot_connect_homes": "Impossibile recuperare le tue case Tibber. Riprova o controlla i log.",
+      "unknown_home_select": "Si è verificato un errore sconosciuto durante la selezione della tua casa Tibber. Controlla i log.",
+      "api_client_not_initialized": "Client API non inizializzato. Riavvia il processo di configurazione."
+    },
+    "abort": {
+      "already_configured": "Questo account e casa Tibber sono già configurati.",
+      "no_homes_found": "Nessuna casa trovata per questo account Tibber.",
+      "no_active_deal": "Nessuna casa con un contratto energetico attivo trovata. Assicurati di avere un contratto attivo con Tibber.",
+      "home_id_missing": "Impossibile recuperare un ID casa valido dall'API per la casa selezionata.",
+      "auth_failed_homes": "Autenticazione fallita durante il recupero delle tue case Tibber. Controlla le credenziali e riprova.",
+      "api_client_not_initialized": "Errore interno: il client API non era pronto. Prova a riavviare il processo di configurazione."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opzioni Tibber Non ufficiale",
+        "description": "Configura gli intervalli di aggiornamento per il recupero dati.\n\nValori minimi: Rewards {rewards_min} minuti, Gizmos {gizmo_min} ore",
+        "data": {
+          "rewards_scan_interval": "Intervallo di aggiornamento rewards (minuti)",
+          "gizmo_scan_interval": "Intervallo di rilevamento dispositivi (ore)"
+        }
+      }
+    },
+    "error": {
+      "invalid_interval": "Valore intervallo non valido"
+    }
+  }
+}

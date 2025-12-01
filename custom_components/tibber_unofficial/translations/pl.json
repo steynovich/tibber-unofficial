@@ -1,0 +1,46 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Połącz z Tibber (Nieoficjalny)",
+        "description": "Wprowadź swoje dane logowania Tibber.",
+        "data": {
+          "email": "E-mail",
+          "password": "Hasło"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Nie można połączyć się z Tibber. Sprawdź swoją sieć i dane logowania.",
+      "invalid_auth": "Nieprawidłowy e-mail lub hasło.",
+      "invalid_input": "Nieprawidłowy format danych. Sprawdź swój e-mail i hasło.",
+      "unknown": "Wystąpił nieznany błąd podczas konfiguracji. Sprawdź logi.",
+      "cannot_connect_homes": "Nie udało się pobrać Twoich domów Tibber. Spróbuj ponownie lub sprawdź logi.",
+      "unknown_home_select": "Wystąpił nieznany błąd podczas wybierania domu Tibber. Sprawdź logi.",
+      "api_client_not_initialized": "Klient API nie został zainicjowany. Uruchom ponownie proces konfiguracji."
+    },
+    "abort": {
+      "already_configured": "To konto i dom Tibber są już skonfigurowane.",
+      "no_homes_found": "Nie znaleziono domów dla tego konta Tibber.",
+      "no_active_deal": "Nie znaleziono domu z aktywną umową energetyczną. Upewnij się, że masz aktywną umowę z Tibber.",
+      "home_id_missing": "Nie udało się pobrać prawidłowego ID domu z API dla wybranego domu.",
+      "auth_failed_homes": "Uwierzytelnianie nie powiodło się podczas pobierania domów Tibber. Sprawdź dane logowania i spróbuj ponownie.",
+      "api_client_not_initialized": "Błąd wewnętrzny: klient API nie był gotowy. Spróbuj ponownie uruchomić proces konfiguracji."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opcje Tibber Nieoficjalny",
+        "description": "Skonfiguruj interwały aktualizacji pobierania danych.\n\nWartości minimalne: Rewards {rewards_min} minut, Gizmos {gizmo_min} godzin",
+        "data": {
+          "rewards_scan_interval": "Interwał aktualizacji rewards (minuty)",
+          "gizmo_scan_interval": "Interwał wykrywania urządzeń (godziny)"
+        }
+      }
+    },
+    "error": {
+      "invalid_interval": "Nieprawidłowa wartość interwału"
+    }
+  }
+}

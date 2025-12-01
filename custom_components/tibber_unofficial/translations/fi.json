@@ -1,0 +1,46 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Yhdistä Tibberiin (Epävirallinen)",
+        "description": "Anna Tibber-kirjautumistietosi.",
+        "data": {
+          "email": "Sähköposti",
+          "password": "Salasana"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Tibberiin ei saada yhteyttä. Tarkista verkko ja kirjautumistiedot.",
+      "invalid_auth": "Virheellinen sähköposti tai salasana.",
+      "invalid_input": "Virheellinen syöttömuoto. Tarkista sähköposti ja salasana.",
+      "unknown": "Tuntematon virhe tapahtui asennuksen aikana. Tarkista lokit.",
+      "cannot_connect_homes": "Tibber-koteja ei voitu noutaa. Yritä uudelleen tai tarkista lokit.",
+      "unknown_home_select": "Tuntematon virhe tapahtui Tibber-kodin valinnassa. Tarkista lokit.",
+      "api_client_not_initialized": "API-asiakas ei ole alustettu. Käynnistä asennusprosessi uudelleen."
+    },
+    "abort": {
+      "already_configured": "Tämä Tibber-tili ja koti on jo määritetty.",
+      "no_homes_found": "Tälle Tibber-tilille ei löytynyt koteja.",
+      "no_active_deal": "Aktiivista energiasopimusta sisältävää kotia ei löytynyt. Varmista, että sinulla on aktiivinen sopimus Tibberin kanssa.",
+      "home_id_missing": "Kelvollista koti-ID:tä ei voitu noutaa API:sta valitulle kodille.",
+      "auth_failed_homes": "Todennus epäonnistui noudettaessa Tibber-kotejasi. Tarkista kirjautumistiedot ja yritä uudelleen.",
+      "api_client_not_initialized": "Sisäinen virhe: API-asiakas ei ollut valmis. Yritä käynnistää asennusprosessi uudelleen."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Tibber Epäviralliset asetukset",
+        "description": "Määritä päivitysvälit tietojen noutoa varten.\n\nVähimmäisarvot: Rewards {rewards_min} minuuttia, Gizmos {gizmo_min} tuntia",
+        "data": {
+          "rewards_scan_interval": "Rewards-päivitysväli (minuuttia)",
+          "gizmo_scan_interval": "Laitteiden etsintäväli (tuntia)"
+        }
+      }
+    },
+    "error": {
+      "invalid_interval": "Virheellinen väliarvo"
+    }
+  }
+}

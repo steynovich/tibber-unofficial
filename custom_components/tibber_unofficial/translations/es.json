@@ -1,0 +1,46 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Conectar a Tibber (No oficial)",
+        "description": "Por favor, introduzca sus credenciales de Tibber.",
+        "data": {
+          "email": "Correo electrónico",
+          "password": "Contraseña"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "No se puede conectar a Tibber. Por favor, verifique su red y credenciales.",
+      "invalid_auth": "Correo electrónico o contraseña no válidos.",
+      "invalid_input": "Formato de entrada no válido. Por favor, verifique su correo electrónico y contraseña.",
+      "unknown": "Se produjo un error desconocido durante la configuración. Por favor, consulte los registros.",
+      "cannot_connect_homes": "No se pudieron obtener sus hogares de Tibber. Por favor, inténtelo de nuevo o consulte los registros.",
+      "unknown_home_select": "Se produjo un error desconocido al seleccionar su hogar de Tibber. Por favor, consulte los registros.",
+      "api_client_not_initialized": "Cliente API no inicializado. Por favor, reinicie el proceso de configuración."
+    },
+    "abort": {
+      "already_configured": "Esta cuenta y hogar de Tibber ya están configurados.",
+      "no_homes_found": "No se encontraron hogares para esta cuenta de Tibber.",
+      "no_active_deal": "No se encontró ningún hogar con un contrato de energía activo. Por favor, asegúrese de tener un contrato activo con Tibber.",
+      "home_id_missing": "No se pudo obtener un ID de hogar válido de la API para el hogar seleccionado.",
+      "auth_failed_homes": "La autenticación falló al intentar obtener sus hogares de Tibber. Por favor, verifique sus credenciales e inténtelo de nuevo.",
+      "api_client_not_initialized": "Error interno: el cliente API no estaba listo. Por favor, intente reiniciar el proceso de configuración."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opciones de Tibber No oficial",
+        "description": "Configure los intervalos de actualización para la obtención de datos.\n\nValores mínimos: Rewards {rewards_min} minutos, Gizmos {gizmo_min} horas",
+        "data": {
+          "rewards_scan_interval": "Intervalo de actualización de rewards (minutos)",
+          "gizmo_scan_interval": "Intervalo de descubrimiento de dispositivos (horas)"
+        }
+      }
+    },
+    "error": {
+      "invalid_interval": "Valor de intervalo no válido"
+    }
+  }
+}

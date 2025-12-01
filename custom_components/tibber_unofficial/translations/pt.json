@@ -1,0 +1,46 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Conectar ao Tibber (Não oficial)",
+        "description": "Por favor, insira suas credenciais do Tibber.",
+        "data": {
+          "email": "E-mail",
+          "password": "Senha"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Não foi possível conectar ao Tibber. Por favor, verifique sua rede e credenciais.",
+      "invalid_auth": "E-mail ou senha inválidos.",
+      "invalid_input": "Formato de entrada inválido. Por favor, verifique seu e-mail e senha.",
+      "unknown": "Ocorreu um erro desconhecido durante a configuração. Por favor, verifique os logs.",
+      "cannot_connect_homes": "Não foi possível obter suas casas do Tibber. Por favor, tente novamente ou verifique os logs.",
+      "unknown_home_select": "Ocorreu um erro desconhecido ao selecionar sua casa do Tibber. Por favor, verifique os logs.",
+      "api_client_not_initialized": "Cliente API não inicializado. Por favor, reinicie o processo de configuração."
+    },
+    "abort": {
+      "already_configured": "Esta conta e casa do Tibber já estão configuradas.",
+      "no_homes_found": "Nenhuma casa encontrada para esta conta do Tibber.",
+      "no_active_deal": "Nenhuma casa com contrato de energia ativo foi encontrada. Por favor, certifique-se de ter um contrato ativo com o Tibber.",
+      "home_id_missing": "Não foi possível obter um ID de casa válido da API para a casa selecionada.",
+      "auth_failed_homes": "A autenticação falhou ao tentar obter suas casas do Tibber. Por favor, verifique suas credenciais e tente novamente.",
+      "api_client_not_initialized": "Erro interno: o cliente API não estava pronto. Por favor, tente reiniciar o processo de configuração."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opções do Tibber Não oficial",
+        "description": "Configure os intervalos de atualização para a obtenção de dados.\n\nValores mínimos: Rewards {rewards_min} minutos, Gizmos {gizmo_min} horas",
+        "data": {
+          "rewards_scan_interval": "Intervalo de atualização de rewards (minutos)",
+          "gizmo_scan_interval": "Intervalo de descoberta de dispositivos (horas)"
+        }
+      }
+    },
+    "error": {
+      "invalid_interval": "Valor de intervalo inválido"
+    }
+  }
+}

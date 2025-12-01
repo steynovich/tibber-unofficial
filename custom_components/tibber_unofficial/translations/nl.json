@@ -13,6 +13,7 @@
     "error": {
       "cannot_connect": "Kan geen verbinding maken met Tibber. Controleer alstublieft uw netwerk en inloggegevens.",
       "invalid_auth": "Ongeldig e-mailadres of wachtwoord.",
+      "invalid_input": "Ongeldig invoerformaat. Controleer alstublieft uw e-mailadres en wachtwoord.",
       "unknown": "Er is een onbekende fout opgetreden tijdens de installatie. Controleer alstublieft de logs.",
       "cannot_connect_homes": "Kan uw Tibber-huizen niet ophalen. Probeer het alstublieft opnieuw of controleer de logs.",
       "unknown_home_select": "Er is een onbekende fout opgetreden bij het selecteren van uw Tibber-thuis. Controleer alstublieft de logs.",
@@ -31,9 +32,15 @@
     "step": {
       "init": {
         "title": "Tibber Onofficiële Opties",
-        "description": "Er zijn momenteel geen opties om te configureren voor deze integratie.",
-        "data": {}
+        "description": "Configureer update-intervallen voor het ophalen van gegevens.\n\nMinimum waarden: Rewards {rewards_min} minuten, Gizmos {gizmo_min} uur",
+        "data": {
+          "rewards_scan_interval": "Rewards update-interval (minuten)",
+          "gizmo_scan_interval": "Apparaatontdekking interval (uur)"
+        }
       }
+    },
+    "error": {
+      "invalid_interval": "Ongeldige intervalwaarde"
     }
   }
 }
