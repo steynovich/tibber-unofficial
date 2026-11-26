@@ -38,6 +38,7 @@ select = [
 ignore = [
     "E501",   # line too long (handled by formatter)
     "PLR0913", # too many arguments
+    "PLR0917", # too many positional arguments (sibling of PLR0913)
     "PLR2004", # magic value comparison
     "SIM108",  # use ternary operator (sometimes less readable)
     "C901",    # too complex (we'll handle complexity case by case)

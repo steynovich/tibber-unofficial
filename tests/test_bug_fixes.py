@@ -183,7 +183,7 @@ class TestTimezoneHandling:
 
         with patch("custom_components.tibber_unofficial.api.datetime") as mock_datetime:
             mock_datetime.now.return_value = fixed_time
-            mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
+            mock_datetime.side_effect = datetime
 
             # Test period calculations use UTC
             start_time, end_time = api_client._get_period_bounds("current_month")

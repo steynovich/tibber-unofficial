@@ -240,7 +240,9 @@ class TibberApiClient:
         if not self._initialized:
             await self.initialize()
 
-        query_type = query.split("{")[0].strip() if "{" in query else "Unknown"
+        query_type = (
+            query.split("{", maxsplit=1)[0].strip() if "{" in query else "Unknown"
+        )
         _LOGGER.debug("GraphQL request: %s, Variables: %s", query_type, variables)
 
         # Apply rate limiting before making the request
