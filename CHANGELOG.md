@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2026.11.0] - 2026-11-26
+
+### 🐛 Bug Fixes
+- **Removed deprecated `CONN_CLASS_CLOUD_POLL` constant** - `config_flow.py`
+  - Silences Home Assistant deprecation warning (constant removed in HA Core 2027.5.0)
+  - Connection class is already declared via `iot_class` in `manifest.json`
+
 ## [2025.11.1] - 2025-11-19 - Bug Fix Release 🐛
 
 ### 🐛 Critical Bug Fixes
