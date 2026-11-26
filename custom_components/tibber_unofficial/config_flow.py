@@ -43,7 +43,6 @@ class TibberConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignor
     """Handle a config flow for Tibber Unofficial."""
 
     VERSION = 1
-    CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
 
     @staticmethod
     @config_entries.HANDLERS.register(DOMAIN)
