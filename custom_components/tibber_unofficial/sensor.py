@@ -16,6 +16,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.loader import async_get_integration
 from homeassistant.util import dt as dt_util
 
 from . import GridRewardsCoordinator
@@ -134,6 +135,9 @@ async def async_setup_entry(
         COORDINATOR_REWARDS
     ]
 
+    integration = await async_get_integration(hass, DOMAIN)
+    sw_version = str(integration.version) if integration.version else None
+
     entities = []
     # Check initial data from the coordinator to decide if sensors should be enabled by default
     initial_rewards_data = (
@@ -182,6 +186,7 @@ async def async_setup_entry(
                 period_from_key=period_from_key,
                 period_to_key=period_to_key,
                 enabled_by_default=initially_available,  # Pass the flag
+                sw_version=sw_version,
             ),
         )
     async_add_entities(entities)
@@ -210,11 +215,13 @@ class GridRewardComponentSensor(
         period_from_key: str,
         period_to_key: str,
         enabled_by_default: bool = True,  # New parameter
+        sw_version: str | None = None,
     ):
         """Initialize the sensor."""
         super().__init__(coordinator)
 
         self._config_entry_id = config_entry_id
+        self._sw_version = sw_version
         self._data_key = data_key
         self._period_from_key = period_from_key
         self._period_to_key = period_to_key
@@ -294,7 +301,7 @@ class GridRewardComponentSensor(
             name=f"Tibber Grid Rewards ({display_identifier})",
             manufacturer="Tibber",
             model="Grid Rewards API",
-            sw_version=self.coordinator.config_entry.version,
+            sw_version=self._sw_version,
             configuration_url="https://app.tibber.com",
             entry_type="service",
         )
